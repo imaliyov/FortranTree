@@ -284,6 +284,8 @@ class MySubrOrFunc(MyNode):
       super().__init__(node,filename)
       self.uses   = self.get_uses()
       self.calls  = self.get_non_internal_type_list( (Fortran2003.Call_Stmt) )
+
+      self.arrays = None
       self.arrays_or_funcs  = self.get_non_internal_type_list( (Fortran2003.Part_Ref) )
       
       self.var_dict = self.get_var_dict()
@@ -422,6 +424,9 @@ class MySubrOrFunc(MyNode):
       self.calls += loc_func_list
       
       self.calls = sorted(self.calls)
+
+      self.arrays = list(set(self.arrays_or_funcs) - set(loc_func_list))
+
       return
 
    def print_html(self):
