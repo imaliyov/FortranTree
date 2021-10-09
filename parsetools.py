@@ -57,7 +57,7 @@ def get_parse_tree_dict(path,source_file_list,print_progress=True):
    if print_progress:
       print(' '*print_len, end='\r')
 
-   print('\nDone: {:.1f} s'.format(tnow() - t1))
+   print('\nDone: {:.2f} s'.format(tnow() - t1))
    return parse_tree_dict
  
 

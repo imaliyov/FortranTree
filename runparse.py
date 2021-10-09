@@ -77,12 +77,26 @@ def create_callable_dict(path,source_file_list):
 
    return callable_dict
 
+def get_all_graph_successors(graph,node,glob_list=None):
+
+   if glob_list is None:
+      glob_list = []
+
+   successors = graph.successors(node)
+
+   glob_list += successors
+
+   for successor in successors:
+      get_all_graph_successors(graph,successor,glob_list=glob_list) 
+
+   return glob_list
+      
 def create_callable_graph_dict(callable_dict):
    """
    Using the callable_dict, create a dict that can be processed by pygraphviz
    """
    t1 = tnow()
-   print('\nCreating a callable graph')
+   print('\nCreating a graph dictionary')
 
    graph_dict = {}
 
@@ -94,11 +108,54 @@ def create_callable_graph_dict(callable_dict):
 
       graph_dict[name] = tmp_call_dict
 
-   print('\nDone: {:.1f} s'.format(tnow() - t1))
+   print('\nDone: {:.2f} s'.format(tnow() - t1))
 
    return graph_dict
 
+def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=[],hide_nodes=[]):
+   """
+   Create a pygraphviz graph based on callable_dict
+   """
+   t1 = tnow()
+   print('\nCreating a graph')
+
+   call_graph = pgv.AGraph(graph_dict,strict=False,directed=True)#.reverse()
+
+   root_node = call_graph.get_node(root_node_name)
+
+   #
+   # Remove the nodes that are from the files in hide_from_files list
+   # or if a node is in hide_nodes list
+   #
+   if len(hide_from_files) > 0 or len(hide_nodes) > 0:
+
+      for node in call_graph.nodes():
+
+         node_in_list = node in hide_nodes
+
+         node_from_hid_file = \
+            node in callable_dict.keys() and \
+            callable_dict[node].filename in hide_from_files 
+
+         if node_in_list or node_from_hid_file:
+            call_graph.delete_node(node)
+   
+   #
+   # Remove all the nodes that are not the successors of the root node
+   #
+   all_successors = get_all_graph_successors(call_graph,root_node)
+
+   for node in call_graph.nodes():
+      if node not in all_successors and node != root_node:
+         call_graph.delete_node(node)
+
+   print('\nDone: {:.2f} s'.format(tnow() - t1))
+
+   return call_graph
+
 def main():
+
+
    #
    # Parse command line arguments
    #
@@ -107,7 +164,10 @@ def main():
    cmd_parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description=help_description)
 
    cmd_parser.add_argument('-p','--path',help='Path to the source code',required = True)
-   cmd_parser.add_argument('--exclude',help='List of file to exclude from parsing',nargs='*',required = False,default=[])
+   cmd_parser.add_argument('-r','--root-node',help='Name of the root node. The call tree will be ploted from the root node.', type=str, required=True)
+   cmd_parser.add_argument('--exclude-files',help='List of file to exclude from parsing',nargs='*',required = False,default=[])
+   cmd_parser.add_argument('--hide-from-files',help='List of files. If a suboutine/function is implemented in one of these files, it will be hidden in the graph.',nargs='*',required = False,default=[])
+   cmd_parser.add_argument('--hide-nodes',help='List of nodes to hide in the graph',nargs='*',required = False,default=[])
    cmd_parser.add_argument('-m','--module_tree',action='store_true',help='Build the module tree',default=False)
 
    args = cmd_parser.parse_args()
@@ -120,7 +180,7 @@ def main():
 
    source_file_list = []
    for filename in os.listdir(args.path):
-      if filename.upper().endswith('.F90') and filename not in args.exclude:
+      if filename.upper().endswith('.F90') and filename not in args.exclude_files:
          source_file_list.append(filename)
 
    source_file_list = sorted(source_file_list)
@@ -142,35 +202,15 @@ def main():
    # tostr() takes into account the comments that are before!
    #print(obj._node.parent.tostr())
 
-   #
-   # Create the graph dict for callables
-   #  
-
-   #def get_all_successors(graph,node):
-      #yield graph.successors()
-     
    graph_dict = create_callable_graph_dict(callable_dict)
 
-   call_graph = pgv.AGraph(graph_dict,strict=False,directed=True)#.reverse()
-
-   print(call_graph.successors(call_graph.get_node('init_boltz_grid')))
-   root_node_name = 'transport'
-   root_node = call_graph.get_node(root_node_name)
-
-   #
-   # Remove all the nodes that are not the successors of the root node
-   #
-   successors = call_graph.successors(root_node)
-
-   for node in call_graph.nodes():
-      if node not in successors and node != root_node:
-         call_graph.delete_node(node)
+   call_graph = create_call_graph(graph_dict,callable_dict,args.root_node,hide_from_files=args.hide_from_files,hide_nodes=args.hide_nodes )
 
    call_graph.node_attr['shape']='rectangle'
    call_graph.graph_attr['rankdir']='LR'
    call_graph.layout(prog='dot')
 
-   call_graph.draw('graph.png')
+   call_graph.draw('{:}.png'.format(args.root_node))
 
 
 if __name__ == '__main__':
