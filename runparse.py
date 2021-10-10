@@ -9,6 +9,8 @@ import pygraphviz as pgv
 import textwrap
 import argparse
 
+import htmltools as hts
+
 from parsetools import  get_parse_tree_dict, \
                         get_global_node_dict, \
                         print_object_attributes, \
@@ -20,6 +22,12 @@ from fparser.two.parser import ParserFactory
 from fparser.two import Fortran2003
 from datetime import datetime
 import time
+
+from yaml import load, dump
+try:
+   from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+   from yaml import Loader, Dumper
 
 #tnow = datetime.now
 tnow = time.time
@@ -165,6 +173,7 @@ def main():
 
    cmd_parser.add_argument('-p','--path',help='Path to the source code',required = True)
    cmd_parser.add_argument('-r','--root-node',help='Name of the root node. The call tree will be ploted from the root node.', type=str, required=True)
+   cmd_parser.add_argument('-y','--hide-from-yaml',help='Hide the callables that are in specific files or select them by name, contained in the yaml file. The file must have the dictionary structure with the following keys: files: [List of files] and/or nodes: [List of nodes].',type=str,required = False,default=None)
    cmd_parser.add_argument('--exclude-files',help='List of file to exclude from parsing',nargs='*',required = False,default=[])
    cmd_parser.add_argument('--hide-from-files',help='List of files. If a suboutine/function is implemented in one of these files, it will be hidden in the graph.',nargs='*',required = False,default=[])
    cmd_parser.add_argument('--hide-nodes',help='List of nodes to hide in the graph',nargs='*',required = False,default=[])
@@ -204,13 +213,37 @@ def main():
 
    graph_dict = create_callable_graph_dict(callable_dict)
 
+   #
+   # Nodes to hide
+   #
+
+   hide_from_files = args.hide_from_files
+   hide_nodes      = args.hide_nodes
+   
+   if args.hide_from_yaml is not None:
+
+      with open(args.hide_from_yaml ,'r') as stream:
+         hide_dict = load(stream,Loader=Loader)
+
+      if 'files' in hide_dict.keys():
+         hide_from_files += hide_dict['files']
+
+      if 'nodes' in hide_dict.keys():
+         hide_nodes += hide_dict['nodes']
+
    call_graph = create_call_graph(graph_dict,callable_dict,args.root_node,hide_from_files=args.hide_from_files,hide_nodes=args.hide_nodes )
 
    call_graph.node_attr['shape']='rectangle'
    call_graph.graph_attr['rankdir']='LR'
    call_graph.layout(prog='dot')
 
+   svg_path = '{:}.svg'.format(args.root_node)
+
+   call_graph.draw(svg_path)
    call_graph.draw('{:}.png'.format(args.root_node))
+
+   html_filename = '{:}.html'.format(args.root_node)
+   hts.create_html(svg_path, html_filename, call_graph.nodes())
 
 
 if __name__ == '__main__':
