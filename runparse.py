@@ -4,7 +4,7 @@
 Run the code parsing and create the subroutine/module interactive graphs
 """
 
-import os, sys
+import os, sys, shutil
 import pygraphviz as pgv
 import textwrap
 import argparse
@@ -237,13 +237,27 @@ def main():
    call_graph.graph_attr['rankdir']='LR'
    call_graph.layout(prog='dot')
 
-   svg_path = '{:}.svg'.format(args.root_node)
+   #
+   # Create the directory for images and save the svg file
+   #
+   img_dir = 'images/callgraph'
+   os.makedirs(img_dir, exist_ok=True)
+   svg_path = os.path.join(img_dir,'{:}.svg'.format(args.root_node))
 
    call_graph.draw(svg_path)
    call_graph.draw('{:}.png'.format(args.root_node))
 
-   html_filename = '{:}.html'.format(args.root_node)
-   hts.create_html(svg_path, html_filename, call_graph.nodes())
+   html_filename = 'call_graph_{:}.html'.format(args.root_node)
+   hts.create_html(svg_path, html_filename, call_graph.nodes(), args.path, args.root_node)
+
+   #
+   # Copy the js scipt for the node highlights
+   #
+   js_source_path = os.path.join(os.path.dirname(__file__),'js','jquery.maphilight.min.js')
+   js_dir = 'js'
+   os.makedirs(js_dir, exist_ok=True)
+   shutil.copy(js_source_path,js_dir)
+
 
 
 if __name__ == '__main__':

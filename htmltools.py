@@ -35,37 +35,116 @@ def get_node_coord(svg_path, node_list):
             pairs_list = [tuple(map(float,p.split(','))) for p in pairs]
             polygone_dict[node] = pairs_list
 
-   print(polygone_dict)
+      #ymin = -left_bottom[1] + y_offset
+      #ymax = -right_top[1]   + y_offset
+
    corner_dict = {}
+
+   for node,p in polygone_dict.items():
+
+      left_bottom = p[1]
+      right_top   = p[3]
+
+      xmin = left_bottom[0] + x_offset
+      xmax = right_top[0]   + x_offset
+
+      ymin = left_bottom[1] - y_offset + image_height
+      ymax = right_top[1]   - y_offset + image_height
+
+      corner_dict[node] = '{},{},{},{}'.format(xmin,ymin,xmax,ymax)
+
+   return image_width, image_height, corner_dict
+
+def print_map(html, image_width, image_height, corner_dict):
+   """
+   Print the map for the nodes of the callgraph
+   """
+
+   html.write('<map name="callgraph">\n')
+
+   for node,corner in corner_dict.items():
+
+      html.write('  <area class="calc_mode_block" id={0:<15} shape="rect" coords={1:<30} alt={0:<15} href="">\n'.format('"'+node+'"','"'+corner_dict[node]+'"'))
+
+   html.write('</map>\n\n')
+
 
 def print_css_style(html):
    html.write('<style>\n\n')
    html.write('</style>\n\n')
 
 def print_maphilight(html):
+   
+   html.write('<!-- Load jquery -->\n')
+   html.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>\n\n')
+
    html.write('<!-- Add maphilight plugin -->\n')
-   html.write('<script type="text/javascript" src="js/jquery.maphilight.min.js"></script>\n')
-   html.write('\n')
+   html.write('<script type="text/javascript" src="js/jquery.maphilight.min.js"></script>\n\n')
+
    html.write('<!-- Activate maphilight plugin -->\n')
    html.write('<script type="text/javascript">$(function() {\n')
    html.write('        $(\'.map\').maphilight();\n')
    html.write('    });\n')
    html.write('</script>\n\n')
 
-def create_html(svg_path, html_filename, node_list):
+   html.write('<!-- Script to trigger show/hide blocks when a calculation mode is selected -->\n')
+   html.write('<script>\n')
+   html.write('$(document).ready(function(){\n')
+   html.write('$(".node_block").on("click", function(e){\n')
+   html.write('   e.preventDefault();\n')
+   html.write('\n')
+   html.write('   /* get the id of the clicked block */\n')
+   html.write('   elem_id = this.id\n')
+   html.write('\n')
+   html.write('   ShowBlockInteractive(elem_id)\n')
+   html.write('\n')
+   html.write('   });\n')
+   html.write('});\n')
+   html.write('</script>\n\n')
 
-   get_node_coord(svg_path, node_list)
+
+def create_html(svg_path, html_filename, node_list, path, root_node):
+
+   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
 
    html = open(html_filename,'w')
 
+   #
+   # Head
+   #
+   html.write('<!DOCTYPE html>\n')
    html.write('<html>\n')
    html.write('<head>\n\n')
+
+   html.write('<title>{:} call graph</title>\n\n'.format(root_node))
 
    print_maphilight(html)
 
    print_css_style(html)
 
    html.write('</head>\n\n')
+
+   #
+   # Body
+   #
+   html.write('<body>\n\n')
+
+   #
+   # Title
+   #
+   html.write('<!-- Title -->\n')
+   html.write('<h1 style="text-align: center;">Call graph from the source folder: <code>{:}</code>. Root node: <code>{:}</code>.</h1>\n'.format(os.path.split(path)[1],root_node)) 
+   html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
+   html.write('<br>\n'*2)
+
+   #
+   # Image
+   #
+   html.write('<img src="{:}" class="map" style="width:{:}px;height:{:}px" alt="Callgraph" usemap="#callgraph">\n\n'.format(svg_path,image_width,image_height))
+
+   print_map(html, image_width, image_height, corner_dict)
+
+   html.write('</body>\n\n')
 
    html.write('</html>\n')
 
