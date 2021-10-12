@@ -96,17 +96,40 @@ def print_maphilight(html):
    html.write('   /* get the id of the clicked block */\n')
    html.write('   elem_id = this.id\n')
    html.write('\n')
-   html.write('   ShowBlockInteractive(elem_id)\n')
+   html.write('   ShowCallGraphBlock(elem_id)\n')
    html.write('\n')
    html.write('   });\n')
    html.write('});\n')
    html.write('</script>\n\n')
 
+def print_node_info(html, callable_dict, node_list):
 
-def create_html(svg_path, html_filename, node_list, path, root_node):
+   html.write('<!-- Nodes description -->\n\n')
 
-   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
+   for node in node_list:
 
+      #html.write('<div id="hide_node_{0}" style="display:none;">\n'.format(node))
+      html.write('<div id="hide_node_{0}" >\n'.format(node))
+
+      if node in callable_dict.keys():
+         html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node].type,callable_dict[node].name))
+         html.write('<p><i>File</i>: {:}</p>\n'.format(callable_dict[node].filename))
+         html.write('<p><i>Line</i>: {:}</p>\n'.format(callable_dict[node].nfirst_line))
+         html.write('<p><i>Num. of lines</i>: {:}</p>\n'.format(callable_dict[node].nlines))
+
+      else:
+         html.write('<p><i>External node</i>: {:}</p>\n'.format(node))
+         html.write('<p>This node is implemented outside the source directory.</p>\n')
+      
+      html.write('</div>\n\n')
+
+
+def create_html(callable_dict, svg_path, node_list, path, root_node):
+
+   #
+   # HTML file
+   #
+   html_filename = 'call_graph_{:}.html'.format(root_node)
    html = open(html_filename,'w')
 
    #
@@ -138,11 +161,21 @@ def create_html(svg_path, html_filename, node_list, path, root_node):
    html.write('<br>\n'*2)
 
    #
+   # Node coordinates from svg
+   #
+   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
+
+   #
    # Image
    #
    html.write('<img src="{:}" class="map" style="width:{:}px;height:{:}px" alt="Callgraph" usemap="#callgraph">\n\n'.format(svg_path,image_width,image_height))
 
    print_map(html, image_width, image_height, corner_dict)
+
+   #
+   # Nodes description
+   #
+   print_node_info(html, callable_dict, node_list)
 
    html.write('</body>\n\n')
 

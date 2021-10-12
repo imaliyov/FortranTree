@@ -112,6 +112,7 @@ class MyNode:
    def __init__(self,node,filename):
       self._node    = node
       self.fparser_type = type(node)
+      self.type = self.interprete_fparser_type(self.fparser_type)
       self.filename = filename
       self.name     = self.get_node_name(node)
       self.parent_types  = self.get_parents(node)
@@ -188,6 +189,19 @@ class MyNode:
          return sorted(list(set(non_internal_type_name_list)))
       else:
          return non_internal_type_list
+
+   def interprete_fparser_type(self, fparser_type):
+      """
+      Return a human readable type of a callable based on the fparser typee
+      """
+      if fparser_type == Fortran2003.Subroutine_Stmt:
+         return 'Subroutine'
+      elif fparser_type == Fortran2003.Function_Stmt:
+         return 'Function'
+      elif fparser_type == Fortran2003.Interface_Stmt:
+         return 'Interface'
+      else:
+         raise ValueError('interprete_fparser_type: fparser_type {:} is unknown'.format(fparser_type)+fparser_type)
 
    @classmethod
    def get_all_subclasses(self):

@@ -200,10 +200,10 @@ def main():
    # Test
    #
    #obj = callable_dict['init_boltz_grid']
-   #obj = callable_dict['transport']
+   obj = callable_dict['transport']
    #obj = callable_dict['hdf_write_dataset']
    #obj = callable_dict['hdf_read_attr_integer_1']
-   #print_object_attributes(obj)
+   print_object_attributes(obj)
 
    # maybe, the built in comparison works...
    #print(callable_dict['transport']==callable_dict['transport'])
@@ -247,8 +247,7 @@ def main():
    call_graph.draw(svg_path)
    call_graph.draw('{:}.png'.format(args.root_node))
 
-   html_filename = 'call_graph_{:}.html'.format(args.root_node)
-   hts.create_html(svg_path, html_filename, call_graph.nodes(), args.path, args.root_node)
+   hts.create_html(callable_dict, svg_path, call_graph.nodes(), args.path, args.root_node)
 
    #
    # Copy the js scipt for the node highlights
