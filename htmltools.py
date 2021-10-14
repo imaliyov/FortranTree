@@ -70,7 +70,56 @@ def print_map(html, image_width, image_height, corner_dict):
 
 
 def print_css_style(html):
+   
+   info_block_width = 350 # in px
+
+   html.write('\n')
    html.write('<style>\n\n')
+
+   #
+   # Wrapper
+   #
+   html.write('.img_info_wrapper{\n')
+   html.write('   width: 100%;\n')
+   html.write('}\n\n')
+
+   #
+   # Graph image
+   #
+   html.write('.img_block{\n')
+   html.write('   display: inline-block;\n')
+   html.write('   float: left;\n')
+   html.write('}\n\n')
+
+   #
+   # Info sub-block
+   #
+   html.write('.info_block{\n')
+   html.write('   display: inline-block;\n')
+   html.write('   float: left;\n')
+   html.write('   width: {:}px;\n'.format(info_block_width))
+   html.write('}\n\n')
+
+   #
+   # Info sub-block
+   #
+   html.write('.info_sub_block{\n')
+   html.write('   width: 100%;\n')
+   html.write('   border-radius: 5px;\n')
+   html.write('   border: 1px solid #000000;\n')
+   html.write('   padding: 10px;\n')
+   html.write('   /*padding-bottom: 5px;*/\n')
+   html.write('   display: inline-block;\n') # side by side
+   html.write('   background: #F5F3DE;\n')
+   html.write('   line-height: 80%;\n')
+   html.write('   font-size: initial;\n')
+   html.write('   \n')
+   html.write('   /* IE 7 hack */\n')
+   html.write('   *zoom:1;\n')
+   html.write('   *display: inline;\n')
+   html.write('   vertical-align: middle;\n')
+   html.write('   }\n\n')
+
    html.write('</style>\n\n')
 
 def print_maphilight(html):
@@ -106,10 +155,13 @@ def print_node_info(html, callable_dict, node_list):
 
    html.write('<!-- Nodes description -->\n\n')
 
+   html.write('<!-- info block div-->\n')
+   html.write('<div class="info_block">\n')
+
    for node in node_list:
 
       #html.write('<div id="hide_node_{0}" style="display:none;">\n'.format(node))
-      html.write('<div id="hide_node_{0}" >\n'.format(node))
+      html.write('<div id="hide_node_{0}" class="info_sub_block" >\n'.format(node))
 
       if node in callable_dict.keys():
          html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node].type,callable_dict[node].name))
@@ -123,6 +175,8 @@ def print_node_info(html, callable_dict, node_list):
       
       html.write('</div>\n\n')
 
+   html.write('<!-- info block div-->\n')
+   html.write('</div>\n\n')
 
 def create_html(callable_dict, svg_path, node_list, path, root_node):
 
@@ -159,23 +213,36 @@ def create_html(callable_dict, svg_path, node_list, path, root_node):
    html.write('<h1 style="text-align: center;">Call graph from the source folder: <code>{:}</code>. Root node: <code>{:}</code>.</h1>\n'.format(os.path.split(path)[1],root_node)) 
    html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
    html.write('<br>\n'*2)
+   html.write('\n'*2)
 
    #
    # Node coordinates from svg
    #
    image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
 
+   print_map(html, image_width, image_height, corner_dict)
+
+   #
+   # Wrapper
+   #
+   html.write('<!-- wrapper div -->\n\n')
+   html.write('<div class="img_info_wrapper">\n')
+
    #
    # Image
    #
-   html.write('<img src="{:}" class="map" style="width:{:}px;height:{:}px" alt="Callgraph" usemap="#callgraph">\n\n'.format(svg_path,image_width,image_height))
-
-   print_map(html, image_width, image_height, corner_dict)
+   html.write('<!-- image div -->\n')
+   html.write('<div class="img_block">\n')
+   html.write('<img src="{:}" class="map" style="width:{:}px;height:{:}px;" alt="Callgraph" usemap="#callgraph">\n\n'.format(svg_path,image_width,image_height))
+   html.write('</div>\n')
 
    #
    # Nodes description
    #
    print_node_info(html, callable_dict, node_list)
+
+   html.write('<!-- wrapper div -->\n')
+   html.write('</div>\n\n')
 
    html.write('</body>\n\n')
 
