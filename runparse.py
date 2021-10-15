@@ -58,7 +58,7 @@ def create_callable_dict(path,source_file_list):
    # Get the dictionary of MyNode instances 
    # for Fortran "callables": subroutines, functions, and interfaces
    #
-   types_tuple = (Fortran2003.Subroutine_Stmt,Fortran2003.Function_Stmt,Fortran2003.Interface_Stmt)
+   types_tuple = (Fortran2003.Subroutine_Stmt,Fortran2003.Function_Stmt,Fortran2003.Interface_Stmt, Fortran2003.Program_Stmt)
    callable_dict = get_global_node_dict(parse_tree_dict,types_tuple,debug=False)
 
    function_list = [ x.name for x in callable_dict.values() if x.fparser_type == Fortran2003.Function_Stmt]

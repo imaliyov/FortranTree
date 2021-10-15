@@ -200,8 +200,10 @@ class MyNode:
          return 'Function'
       elif fparser_type == Fortran2003.Interface_Stmt:
          return 'Interface'
+      elif fparser_type == Fortran2003.Program_Stmt:
+         return 'Program'
       else:
-         raise ValueError('interprete_fparser_type: fparser_type {:} is unknown'.format(fparser_type)+fparser_type)
+         raise ValueError('interprete_fparser_type: fparser_type {:} is unknown'.format(fparser_type)+str(fparser_type))
 
    @classmethod
    def get_all_subclasses(self):
@@ -313,7 +315,7 @@ class MySubrOrFunc(MyNode):
 
    @staticmethod
    def supported_fparser_types():
-      return [ Fortran2003.Subroutine_Stmt, Fortran2003.Function_Stmt ]
+      return [ Fortran2003.Subroutine_Stmt, Fortran2003.Function_Stmt, Fortran2003.Program_Stmt ]
 
    def get_alloc_wo_dealloc(self):
       """
