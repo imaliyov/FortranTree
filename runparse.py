@@ -9,7 +9,7 @@ import pygraphviz as pgv
 import textwrap
 import argparse
 
-import htmltools as hts
+import htmltools
 
 from parsetools import  get_parse_tree_dict, \
                         get_global_node_dict, \
@@ -161,6 +161,29 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=[]
 
    return call_graph
 
+def get_node_depth(graph,node,depth=0):
+   """
+   Get the depth of the node (an integer) using the predecessors method.
+   """
+
+   predecessors = graph.predecessors(node)
+   
+   if len(predecessors) > 0:
+      depth = get_node_depth(graph,predecessors[0],depth=depth+1)
+
+   return depth
+
+def get_sorted_node_list(graph):
+   """
+   Sort the graph nodes according to their depth in the graph and then alphabetic oreder
+   """
+
+   node_list = graph.nodes()
+
+   node_list = sorted(node_list, key = lambda x: (get_node_depth(graph,x), x ))
+
+   return node_list
+
 def main():
 
 
@@ -247,7 +270,8 @@ def main():
    call_graph.draw(svg_path)
    call_graph.draw('{:}.png'.format(args.root_node))
 
-   hts.create_html(callable_dict, svg_path, call_graph.nodes(), args.path, args.root_node)
+   sorted_node_list = get_sorted_node_list(call_graph)
+   htmltools.create_html(callable_dict, svg_path, sorted_node_list, args.path, args.root_node)
 
    #
    # Copy the js scipt for the node highlights
