@@ -55,7 +55,7 @@ def get_node_coord(svg_path, node_list):
 
    return image_width, image_height, corner_dict
 
-def print_map(html, image_width, image_height, corner_dict):
+def print_image_map(html, image_width, image_height, corner_dict):
    """
    Print the map for the nodes of the callgraph
    """
@@ -64,7 +64,7 @@ def print_map(html, image_width, image_height, corner_dict):
 
    for node,corner in corner_dict.items():
 
-      html.write('  <area class="calc_mode_block" id={0:<15} shape="rect" coords={1:<30} alt={0:<15} href="">\n'.format('"'+node+'"','"'+corner_dict[node]+'"'))
+      html.write('  <area class="graph_node_block" id={0:<15} shape="rect" coords={1:<30} alt={0:<15} href="">\n'.format('"'+node+'"','"'+corner_dict[node]+'"'))
 
    html.write('</map>\n\n')
 
@@ -109,7 +109,8 @@ def print_css_style(html):
    html.write('   border: 1px solid #000000;\n')
    html.write('   padding: 10px;\n')
    html.write('   /*padding-bottom: 5px;*/\n')
-   html.write('   display: inline-block;\n') # side by side
+   #html.write('   display: inline-block;\n') # side by side
+   html.write('   display: none;\n') # side by side
    html.write('   background: #F5F3DE;\n')
    html.write('   line-height: 80%;\n')
    html.write('   font-size: initial;\n')
@@ -136,10 +137,12 @@ def print_maphilight(html):
    html.write('    });\n')
    html.write('</script>\n\n')
 
+def print_script_show_blocks(html):
+   
    html.write('<!-- Script to trigger show/hide blocks when a calculation mode is selected -->\n')
    html.write('<script>\n')
    html.write('$(document).ready(function(){\n')
-   html.write('$(".node_block").on("click", function(e){\n')
+   html.write('$(".graph_node_block").on("click", function(e){\n')
    html.write('   e.preventDefault();\n')
    html.write('\n')
    html.write('   /* get the id of the clicked block */\n')
@@ -148,7 +151,19 @@ def print_maphilight(html):
    html.write('   ShowCallGraphBlock(elem_id)\n')
    html.write('\n')
    html.write('   });\n')
-   html.write('});\n')
+   html.write('});\n\n')
+
+   html.write('function ShowCallGraphBlock(elem_id) {\n')
+   html.write('   var elem = document.getElementById("node_"+elem_id);\n')
+   html.write('\n')
+   html.write('   if (elem.style.display === "block"){\n')
+   html.write('      elem.style.display = "none";\n')
+   html.write('   } else {\n')
+   html.write('      elem.style.display = "block";\n')
+   html.write('   }\n')
+   html.write('\n')
+   html.write('}\n\n')
+
    html.write('</script>\n\n')
 
 def print_node_info(html, callable_dict, node_list):
@@ -160,8 +175,7 @@ def print_node_info(html, callable_dict, node_list):
 
    for node in node_list:
 
-      #html.write('<div id="hide_node_{0}" style="display:none;">\n'.format(node))
-      html.write('<div id="hide_node_{0}" class="info_sub_block" >\n'.format(node))
+      html.write('<div id="node_{0}" class="info_sub_block" >\n'.format(node))
 
       if node in callable_dict.keys():
          html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node].type,callable_dict[node].name))
@@ -197,6 +211,8 @@ def create_html(callable_dict, svg_path, node_list, path, root_node):
 
    print_maphilight(html)
 
+   print_script_show_blocks(html)
+
    print_css_style(html)
 
    html.write('</head>\n\n')
@@ -220,7 +236,7 @@ def create_html(callable_dict, svg_path, node_list, path, root_node):
    #
    image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
 
-   print_map(html, image_width, image_height, corner_dict)
+   print_image_map(html, image_width, image_height, corner_dict)
 
    #
    # Wrapper
