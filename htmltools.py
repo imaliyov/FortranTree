@@ -104,6 +104,7 @@ def print_css_style(html):
    # Info sub-block
    #
    html.write('.info_sub_block{\n')
+   html.write('   position: relative;\n') # !! for close button
    html.write('   width: 100%;\n')
    html.write('   border-radius: 5px;\n')
    html.write('   border: 1px solid #000000;\n')
@@ -120,6 +121,28 @@ def print_css_style(html):
    html.write('   *display: inline;\n')
    html.write('   vertical-align: middle;\n')
    html.write('   }\n\n')
+
+   html.write('.info_sub_block:hover {\n')
+   html.write('   box-shadow: 2px 2px 5px rgba(0,0,0,.2);\n')
+   html.write('}\n\n')
+
+   #
+   # Close "button" for each info sub block
+   #
+   html.write('.closeDiv{\n')
+   html.write('   cursor: pointer;\n')
+   html.write('   position: absolute;\n')
+   html.write('   margin-top:2px;\n')
+   html.write('   text-align:right;\n')
+   html.write('   right: 15px;\n')
+   html.write('   opacity:0.6;\n')
+   html.write('   display:inline-block;\n')
+   html.write('   font-size: 1.5em;\n')
+   html.write('}\n\n')
+
+   html.write('.closeDiv:hover {\n')
+   html.write('   opacity: 0.3;\n')
+   html.write('}\n\n')
 
    html.write('</style>\n\n')
 
@@ -164,6 +187,11 @@ def print_script_show_blocks(html):
    html.write('\n')
    html.write('}\n\n')
 
+   html.write('function CloseDivById(elem_id) {\n')
+   html.write('   var elem = document.getElementById("node_"+elem_id);\n')
+   html.write('   elem.style.display = "none";\n')
+   html.write('} \n\n')
+
    html.write('</script>\n\n')
 
 def print_node_info(html, callable_dict, node_list):
@@ -176,6 +204,9 @@ def print_node_info(html, callable_dict, node_list):
    for node in node_list:
 
       html.write('<div id="node_{0}" class="info_sub_block" >\n'.format(node))
+
+      # Close "button"
+      html.write('<div onclick="CloseDivById(\'{:}\')" class="closeDiv">&#215;</div>\n\n'.format(node))
 
       if node in callable_dict.keys():
          html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node].type,callable_dict[node].name))
