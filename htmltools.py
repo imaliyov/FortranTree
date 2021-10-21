@@ -92,7 +92,7 @@ def print_css_style(html):
    html.write('}\n\n')
 
    #
-   # Info sub-block
+   # Info block
    #
    html.write('.info_block{\n')
    html.write('   display: inline-block;\n')
@@ -103,6 +103,10 @@ def print_css_style(html):
    #
    # Info sub-block
    #
+   html.write('.info_sub_block_container{\n')
+   html.write('   display: none;\n') # side by side
+   html.write('}\n\n')
+
    html.write('.info_sub_block{\n')
    html.write('   position: relative;\n') # !! for close button
    html.write('   width: 100%;\n')
@@ -111,7 +115,6 @@ def print_css_style(html):
    html.write('   padding: 10px;\n')
    html.write('   /*padding-bottom: 5px;*/\n')
    #html.write('   display: inline-block;\n') # side by side
-   html.write('   display: none;\n') # side by side
    html.write('   background: #F5F3DE;\n')
    html.write('   line-height: 80%;\n')
    html.write('   font-size: initial;\n')
@@ -123,7 +126,7 @@ def print_css_style(html):
    html.write('   }\n\n')
 
    html.write('.info_sub_block:hover {\n')
-   html.write('   box-shadow: 2px 2px 5px rgba(0,0,0,.2);\n')
+   html.write('   box-shadow: 3px 3px 3px rgba(212, 95, 95);\n')
    html.write('}\n\n')
 
    #
@@ -146,7 +149,7 @@ def print_css_style(html):
 
    html.write('</style>\n\n')
 
-def print_maphilight(html):
+def print_maphilight(html, node_list):
    
    html.write('<!-- Load jquery -->\n')
    html.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>\n\n')
@@ -156,7 +159,19 @@ def print_maphilight(html):
 
    html.write('<!-- Activate maphilight plugin -->\n')
    html.write('<script type="text/javascript">$(function() {\n')
-   html.write('        $(\'.map\').maphilight();\n')
+   html.write('        $(\'.map\').maphilight();\n\n')
+
+   html.write('/* Highlight a node on graph if the info block is hovered */\n\n')
+
+   for node in node_list:
+      
+      html.write('/* {:} */\n'.format(node))
+      html.write('        $("#node_{:}").mouseover(function(e) {{\n'.format(node))
+      html.write('            $("#{:}").mouseover();\n'.format(node))
+      html.write('        }).mouseout(function(e) {\n')
+      html.write('            $("#{:}").mouseout();\n'.format(node))
+      html.write('        }).click(function(e) { e.preventDefault(); });\n\n')
+
    html.write('    });\n')
    html.write('</script>\n\n')
 
@@ -203,7 +218,9 @@ def print_node_info(html, callable_dict, node_list):
 
    for node in node_list:
 
-      html.write('<div id="node_{0}" class="info_sub_block" >\n'.format(node))
+      html.write('<div id="node_{0}" class="info_sub_block_container" >\n'.format(node))
+
+      html.write('<div class="info_sub_block" >\n'.format(node))
 
       # Close "button"
       html.write('<div onclick="CloseDivById(\'{:}\')" class="closeDiv">&#215;</div>\n\n'.format(node))
@@ -218,6 +235,12 @@ def print_node_info(html, callable_dict, node_list):
          html.write('<p><i>External node</i>: {:}</p>\n'.format(node))
          html.write('<p>This node is implemented outside the source directory.</p>\n')
       
+      html.write('<!-- sub block div -->\n')
+      html.write('</div>\n\n')
+
+      html.write('\n<br>\n')
+
+      html.write('<!-- Container div -->\n')
       html.write('</div>\n\n')
 
    html.write('<!-- info block div-->\n')
@@ -240,7 +263,7 @@ def create_html(callable_dict, svg_path, node_list, path, root_node):
 
    html.write('<title>{:} call graph</title>\n\n'.format(root_node))
 
-   print_maphilight(html)
+   print_maphilight(html, node_list)
 
    print_script_show_blocks(html)
 
