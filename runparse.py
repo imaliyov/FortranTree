@@ -184,8 +184,33 @@ def get_sorted_node_list(graph):
 
    return node_list
 
-def main():
+def get_node_type_dict(callable_dict, node_list):
+   
+   node_type_dict = {}
 
+   for node in node_list:
+      if node in callable_dict.keys():
+         ntype = callable_dict[node].type
+         node_type_dict[node] = ntype
+      else:
+         node_type_dict[node] = 'External'
+
+   return node_type_dict
+
+def get_prefix_node_list(callable_dict, node_list):
+   
+   prefix_node_list = []
+
+   for node in node_list:
+      if node in callable_dict.keys():
+         ntype = callable_dict[node].type
+         prefix_node_list.append(ntype+'-'+node)
+      else:
+         prefix_node_list.append('External'+'-'+node)
+
+   return prefix_node_list
+
+def main():
 
    #
    # Parse command line arguments
@@ -271,7 +296,10 @@ def main():
    call_graph.draw('{:}.png'.format(args.root_node))
 
    sorted_node_list = get_sorted_node_list(call_graph)
-   htmltools.create_html(callable_dict, svg_path, sorted_node_list, args.path, args.root_node)
+   prefix_node_list = get_prefix_node_list(callable_dict,sorted_node_list)
+   node_type_dict = get_node_type_dict(callable_dict,sorted_node_list)
+
+   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, args.root_node)
 
    #
    # Copy the js scipt for the node highlights

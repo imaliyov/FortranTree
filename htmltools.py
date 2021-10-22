@@ -7,7 +7,7 @@ Tools for the html file writing based on the call graph
 import re, re, os, sys, time
 import numpy as np
 
-def get_node_coord(svg_path, node_list):
+def get_node_coord(svg_path, node_list, node_type_dict):
    """
    Get coordinates of each node by parsing the svg graph file
    """
@@ -16,6 +16,9 @@ def get_node_coord(svg_path, node_list):
 
    with open(svg_path,'r') as f:
       lines = f.readlines()
+
+      # insted of "Subroutine-boltz_setup", "boltz_setup", to match with svg file node names
+      node_list_wo_prefix = [l.split('-')[1] for l in node_list]
 
       for i,line in enumerate(lines):
 
@@ -27,8 +30,10 @@ def get_node_coord(svg_path, node_list):
             y_offset = image_height - y_offset
 
          # line example: <!-- init_boltz_grid -->
-         if '<!--' in line and line.split()[1] in node_list:
+         if '<!--' in line and line.split()[1] in node_list_wo_prefix:
             node = line.split()[1]
+            node = node_type_dict[node] + '-' + node
+
             # line example: <polygon fill="none" stroke="black" points="378.99,-36 286.99,-36 286.99,0 378.99,0 378.99,-36"/>
             poly_line = lines[i+3]
             pairs = poly_line.split('points=')[1].strip('"/>').split()[:-1]
@@ -147,6 +152,32 @@ def print_css_style(html):
    html.write('   opacity: 0.3;\n')
    html.write('}\n\n')
 
+   html.write('.actionBlocksContainer{\n')
+   html.write('   display: block;\n')
+   html.write('   text-align: center;\n')
+   html.write('}\n\n')
+
+   html.write('.actionBlock{\n')
+   html.write('   cursor: pointer;\n')
+   html.write('   font-size: 1.1em;\n')
+   html.write('   display: inline-block;\n')
+   html.write('   border-radius: 5px;\n')
+   html.write('   border: 1px solid #000000;\n')
+   html.write('   padding: 10px;\n')
+   html.write('   /*padding-bottom: 5px;*/\n')
+   html.write('   line-height: 80%;\n')
+   html.write('   font-family: Arial, Helvetica, sans-serif;\n')
+   html.write('}\n\n')
+
+   html.write('.ShowAll{\n')
+   html.write('   color: #A77700;\n')
+   html.write('   background: #F5F3DE;\n')
+   html.write('}\n\n')
+
+   html.write('.HideAll{\n')
+   html.write('   background: #E3E3E3;\n')
+   html.write('}\n\n')
+
    html.write('</style>\n\n')
 
 def print_maphilight(html, node_list):
@@ -207,6 +238,20 @@ def print_script_show_blocks(html):
    html.write('   elem.style.display = "none";\n')
    html.write('} \n\n')
 
+   html.write('function ShowAllInfoBlocks(elem_id) {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "block";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
+   html.write('function HideAllInfoBlocks(elem_id) {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "none";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
    html.write('</script>\n\n')
 
 def print_node_info(html, callable_dict, node_list):
@@ -218,21 +263,23 @@ def print_node_info(html, callable_dict, node_list):
 
    for node in node_list:
 
-      html.write('<div id="node_{0}" class="info_sub_block_container" >\n'.format(node))
+      node_name = node.split('-')[1]
 
-      html.write('<div class="info_sub_block" >\n'.format(node))
+      html.write('<div id="node_{:}" class="info_sub_block_container" >\n'.format(node))
+
+      html.write('<div class="info_sub_block" >\n')
 
       # Close "button"
       html.write('<div onclick="CloseDivById(\'{:}\')" class="closeDiv">&#215;</div>\n\n'.format(node))
 
-      if node in callable_dict.keys():
-         html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node].type,callable_dict[node].name))
-         html.write('<p><i>File</i>: {:}</p>\n'.format(callable_dict[node].filename))
-         html.write('<p><i>Line</i>: {:}</p>\n'.format(callable_dict[node].nfirst_line))
-         html.write('<p><i>Num. of lines</i>: {:}</p>\n'.format(callable_dict[node].nlines))
+      if node_name in callable_dict.keys():
+         html.write('<p><i>{:}</i>: {:}</p>\n'.format(callable_dict[node_name].type,callable_dict[node_name].name))
+         html.write('<p><i>File</i>: {:}</p>\n'.format(callable_dict[node_name].filename))
+         html.write('<p><i>Line</i>: {:}</p>\n'.format(callable_dict[node_name].nfirst_line))
+         html.write('<p><i>Num. of lines</i>: {:}</p>\n'.format(callable_dict[node_name].nlines))
 
       else:
-         html.write('<p><i>External node</i>: {:}</p>\n'.format(node))
+         html.write('<p><i>External node</i>: {:}</p>\n'.format(node_name))
          html.write('<p>This node is implemented outside the source directory.</p>\n')
       
       html.write('<!-- sub block div -->\n')
@@ -246,7 +293,7 @@ def print_node_info(html, callable_dict, node_list):
    html.write('<!-- info block div-->\n')
    html.write('</div>\n\n')
 
-def create_html(callable_dict, svg_path, node_list, path, root_node):
+def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_node):
 
    #
    # HTML file
@@ -282,13 +329,19 @@ def create_html(callable_dict, svg_path, node_list, path, root_node):
    html.write('<!-- Title -->\n')
    html.write('<h1 style="text-align: center;">Call graph from the source folder: <code>{:}</code>. Root node: <code>{:}</code>.</h1>\n'.format(os.path.split(path)[1],root_node)) 
    html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
+
+   html.write('<div class="actionBlocksContainer">\n')
+   html.write('<div class="actionBlock ShowAll" onclick="ShowAllInfoBlocks()">Show all nodes</div>\n')
+   html.write('<div class="actionBlock HideAll" onclick="HideAllInfoBlocks()">Hide all nodes</div>\n')
+   html.write('</div>\n\n')
+
    html.write('<br>\n'*2)
    html.write('\n'*2)
 
    #
    # Node coordinates from svg
    #
-   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list)
+   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list, node_type_dict)
 
    print_image_map(html, image_width, image_height, corner_dict)
 
