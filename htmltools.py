@@ -178,6 +178,26 @@ def print_css_style(html):
    html.write('   background: #E3E3E3;\n')
    html.write('}\n\n')
 
+   html.write('.ShowAllSubr{\n')
+   html.write('   color: #A77700;\n')
+   html.write('   background: #F5F3DE;\n')
+   html.write('}\n\n')
+
+   html.write('.ShowAllFunc{\n')
+   html.write('   color: #A77700;\n')
+   html.write('   background: #F5F3DE;\n')
+   html.write('}\n\n')
+   
+   html.write('.ShowAllInter{\n')
+   html.write('   color: #A77700;\n')
+   html.write('   background: #F5F3DE;\n')
+   html.write('}\n\n')
+   
+   html.write('.ShowAllExt{\n')
+   html.write('   color: #A77700;\n')
+   html.write('   background: #F5F3DE;\n')
+   html.write('}\n\n')
+
    html.write('</style>\n\n')
 
 def print_maphilight(html, node_list):
@@ -238,17 +258,45 @@ def print_script_show_blocks(html):
    html.write('   elem.style.display = "none";\n')
    html.write('} \n\n')
 
-   html.write('function ShowAllInfoBlocks(elem_id) {\n')
+   html.write('function ShowAllInfoBlocks() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function HideAllInfoBlocks(elem_id) {\n')
+   html.write('function HideAllInfoBlocks() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "none";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
+   html.write('function ShowAllFunctions() {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_Function]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "block";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
+   html.write('function ShowAllSubroutines() {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_Subroutine]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "block";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
+   html.write('function ShowAllInterfaces() {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_Interface]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "block";\n')
+   html.write('     }\n')
+   html.write('}\n\n')
+
+   html.write('function ShowAllExternal() {\n')
+   html.write('   var modeblocks = document.querySelectorAll("[id^=node_External]");\n')
+   html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
+   html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
@@ -328,11 +376,17 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #
    html.write('<!-- Title -->\n')
    html.write('<h1 style="text-align: center;">Call graph from the source folder: <code>{:}</code>. Root node: <code>{:}</code>.</h1>\n'.format(os.path.split(path)[1],root_node)) 
-   html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
+   #html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
 
    html.write('<div class="actionBlocksContainer">\n')
    html.write('<div class="actionBlock ShowAll" onclick="ShowAllInfoBlocks()">Show all nodes</div>\n')
    html.write('<div class="actionBlock HideAll" onclick="HideAllInfoBlocks()">Hide all nodes</div>\n')
+
+   html.write('<div class="actionBlock ShowAllSubr" onclick="ShowAllSubroutines()">Show all subroutines</div>\n')
+   html.write('<div class="actionBlock ShowAllFunc" onclick="ShowAllFunctions()">Show all functions</div>\n')
+   html.write('<div class="actionBlock ShowAllInter" onclick="ShowAllInterfaces()">Show all interfaces</div>\n')
+   html.write('<div class="actionBlock ShowAllExt" onclick="ShowAllExternal()">Show all external nodes</div>\n')
+
    html.write('</div>\n\n')
 
    html.write('<br>\n'*2)
