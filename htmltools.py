@@ -239,8 +239,27 @@ def print_script_show_blocks(html):
    html.write('\n')
    html.write('   ShowCallGraphBlock(elem_id)\n')
    html.write('\n')
+   html.write('   });\n\n')
+
+   html.write('$(".graph_node_block").on("mouseenter", function(e){\n')
+   html.write('   e.preventDefault();\n')
+   html.write('   BoxShadowOn(this.id);\n')
    html.write('   });\n')
+   html.write('$(".graph_node_block").on("mouseleave", function(e){\n')
+   html.write('   e.preventDefault();\n')
+   html.write('   BoxShadowOff(this.id);\n')
+   html.write('   });\n\n')
+
    html.write('});\n\n')
+
+   html.write('function BoxShadowOn(elem_id) {\n')
+   html.write('   var elem = document.getElementById("box_node_"+elem_id);\n')
+   html.write('   elem.style.boxShadow = "3px 3px 3px rgba(212, 95, 95)";\n')
+   html.write('}\n\n')
+   html.write('function BoxShadowOff(elem_id) {\n')
+   html.write('   var elem = document.getElementById("box_node_"+elem_id);\n')
+   html.write('   elem.style.boxShadow = "";\n')
+   html.write('}\n\n')
 
    html.write('function ShowCallGraphBlock(elem_id) {\n')
    html.write('   var elem = document.getElementById("node_"+elem_id);\n')
@@ -265,7 +284,7 @@ def print_script_show_blocks(html):
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function HideAllInfoBlocks() {\n')
+   html.write('function HideAllNodes() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "none";\n')
@@ -315,7 +334,7 @@ def print_node_info(html, callable_dict, node_list):
 
       html.write('<div id="node_{:}" class="info_sub_block_container" >\n'.format(node))
 
-      html.write('<div class="info_sub_block" >\n')
+      html.write('<div id="box_node_{:}" class="info_sub_block" >\n'.format(node))
 
       # Close "button"
       html.write('<div onclick="CloseDivById(\'{:}\')" class="closeDiv">&#215;</div>\n\n'.format(node))
@@ -380,7 +399,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
 
    html.write('<div class="actionBlocksContainer">\n')
    html.write('<div class="actionBlock ShowAll" onclick="ShowAllInfoBlocks()">Show all nodes</div>\n')
-   html.write('<div class="actionBlock HideAll" onclick="HideAllInfoBlocks()">Hide all nodes</div>\n')
+   html.write('<div class="actionBlock HideAll" onclick="HideAllNodes()">Hide all nodes</div>\n')
 
    html.write('<div class="actionBlock ShowAllSubr" onclick="ShowAllSubroutines()">Show all subroutines</div>\n')
    html.write('<div class="actionBlock ShowAllFunc" onclick="ShowAllFunctions()">Show all functions</div>\n')
