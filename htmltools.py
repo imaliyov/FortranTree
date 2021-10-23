@@ -76,7 +76,7 @@ def print_image_map(html, image_width, image_height, corner_dict):
 
 def print_css_style(html):
    
-   info_block_width = 350 # in px
+   info_block_width = 500 # in px
 
    html.write('\n')
    html.write('<style>\n\n')
@@ -97,12 +97,27 @@ def print_css_style(html):
    html.write('}\n\n')
 
    #
+   # Info block wrapper for horizontal positioning
+   #
+   html.write('.info_block_wrapper{\n')
+   html.write('   position: absolute;\n')
+   html.write('   left: 608px;\n')
+   html.write('   overflow: auto;\n')
+   html.write('   top: auto;\n')
+   html.write('}\n')
+   html.write('\n\n')
+
+   #
    # Info block
    #
    html.write('.info_block{\n')
+   html.write('   position: relative;\n')
+   html.write('   margin-left: 30px;\n')
    html.write('   display: inline-block;\n')
    html.write('   float: left;\n')
    html.write('   width: {:}px;\n'.format(info_block_width))
+   html.write('   height: 94vh;\n')
+   html.write('   overflow: auto;\n')
    html.write('}\n\n')
 
    #
@@ -110,6 +125,7 @@ def print_css_style(html):
    #
    html.write('.info_sub_block_container{\n')
    html.write('   display: none;\n') # side by side
+   html.write('   margin-right: 30px;\n')
    html.write('}\n\n')
 
    html.write('.info_sub_block{\n')
@@ -256,10 +272,13 @@ def print_script_show_blocks(html):
    html.write('// === Scroll ===\n')
    html.write('$(window).scroll(function() {  // assign scroll event listener\n')
    html.write('   var currentScroll = $(window).scrollTop(); // get current position\n')
-   html.write('   /*alert($(".actionBlocksContainer").attr("style"))*/\n')
+   html.write('   /*alert($(".actionBlocksContainer").attr("style"))*/\n\n')
+
+   html.write('   /* Action buttons */\n')
    html.write('   if (currentScroll >= 60) { // apply position: fixed if you\n')
    html.write('      $(".actionBlocksContainer").css({ // scroll to that element or below it\n')
    html.write('         position: "fixed",\n')
+   html.write('         width: "100%",\n')
    html.write('         top: "5px",\n')
    html.write('         transform: "translate(-50%, 0)",\n')
    html.write('      });\n')
@@ -270,6 +289,18 @@ def print_script_show_blocks(html):
    html.write('         textAlign: "center",\n')
    html.write('      });\n')
    html.write('   }\n')
+
+   html.write('   /* Info blocks  */\n')
+   html.write('   if (currentScroll >= 60) { // apply position: fixed if you\n')
+   html.write('      $(".info_block_wrapper").css({ // scroll to that element or below it\n')
+   html.write('         top: currentScroll+50+"px",\n')
+   html.write('      });\n')
+   html.write('   } else { // apply position: static\n')
+   html.write('      $(".info_block_wrapper").css({ // if you scroll above it\n')
+   html.write('         top: "auto",\n')
+   html.write('      });\n')
+   html.write('   }\n\n')
+
    html.write('   });\n\n')
 
    html.write('});\n\n')
@@ -299,7 +330,7 @@ def print_script_show_blocks(html):
    html.write('   elem.style.display = "none";\n')
    html.write('} \n\n')
 
-   html.write('function ShowAllInfoBlocks() {\n')
+   html.write('function ShowAllNodes() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
@@ -347,8 +378,11 @@ def print_node_info(html, callable_dict, node_list):
 
    html.write('<!-- Nodes description -->\n\n')
 
+   html.write('<!-- info block wrapper-->\n')
+   html.write('<div class="info_block_wrapper">\n\n')
+
    html.write('<!-- info block div-->\n')
-   html.write('<div class="info_block">\n')
+   html.write('<div class="info_block">\n\n')
 
    for node in node_list:
 
@@ -380,6 +414,9 @@ def print_node_info(html, callable_dict, node_list):
       html.write('</div>\n\n')
 
    html.write('<!-- info block div-->\n')
+   html.write('</div>\n\n')
+
+   html.write('<!-- info block wrapper-->\n')
    html.write('</div>\n\n')
 
 def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_node):
@@ -420,7 +457,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
 
    html.write('<div class="actionBlocksContainer">\n')
-   html.write('<div class="actionBlock ShowAll" onclick="ShowAllInfoBlocks()">Show all nodes</div>\n')
+   html.write('<div class="actionBlock ShowAll" onclick="ShowAllNodes()">Show all nodes</div>\n')
    html.write('<div class="actionBlock HideAll" onclick="HideAllNodes()">Hide all nodes</div>\n')
 
    html.write('<div class="actionBlock ShowAllSubr" onclick="ShowAllSubroutines()">Show all subroutines</div>\n')
