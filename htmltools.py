@@ -233,14 +233,12 @@ def print_maphilight(html, node_list):
 
    html.write('/* Highlight a node on graph if the info block is hovered */\n\n')
 
-   for node in node_list:
-      
-      html.write('/* {:} */\n'.format(node))
-      html.write('        $("#node_{:}").mouseover(function(e) {{\n'.format(node))
-      html.write('            $("#{:}").mouseover();\n'.format(node))
-      html.write('        }).mouseout(function(e) {\n')
-      html.write('            $("#{:}").mouseout();\n'.format(node))
-      html.write('        }).click(function(e) { e.preventDefault(); });\n\n')
+   html.write('        $(".info_sub_block_container").mouseover(function(e) {\n')
+   html.write('            elem_id = this.id.replace("node_","")\n')
+   html.write('            $("#"+elem_id).mouseover();\n')
+   html.write('        }).mouseout(function(e) {\n')
+   html.write('            $("#"+elem_id).mouseout();\n')
+   html.write('        }).click(function(e) { e.preventDefault(); });\n\n')
 
    html.write('    });\n')
    html.write('</script>\n\n')
