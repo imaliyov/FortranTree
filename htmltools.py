@@ -181,11 +181,23 @@ def print_css_style(html,action_dict, image_width):
    html.write('   font-size: 0.9em;\n')
    html.write('   display: inline-block;\n')
    html.write('   border-radius: 5px;\n')
-   html.write('   border: 1px solid #000000;\n')
+   html.write('   border: 2px solid #000000;\n')
    html.write('   padding: 10px;\n')
    html.write('   /*padding-bottom: 5px;*/\n')
    html.write('   line-height: 80%;\n')
    html.write('   font-family: Arial, Helvetica, sans-serif;\n')
+   html.write('   box-shadow: 0 0 5px -1px rgba(0,0,0,0.6);\n')
+   html.write('}\n\n')
+
+   html.write('.actionBlock:hover{\n')
+   html.write('   color: rgba(74,74,74,0.8);\n')
+   html.write('   border: 2px solid #767676;\n')
+   html.write('}\n\n')
+
+   html.write('.actionBlock:active{\n')
+   html.write('   box-shadow: 0 0 9px -1px rgba(0,0,0,0.6);\n')
+   html.write('   color: rgba(90,90,90,0.7);\n')
+   html.write('   border: 2px solid #878787;\n')
    html.write('}\n\n')
 
    html.write('/* Style for action buttons */\n')
@@ -540,15 +552,23 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
 
    html.write('<div class="actionBlocksContainer">\n')
 
-   for action in action_dict.keys():
+   num_actions = len(list(action_dict.keys()))
+
+   for i,action in enumerate(action_dict.keys()):
+
       func = action_dict[action]['func']
       text = action_dict[action]['text']
+
+      action = '' if action == 'ShowAll' else action
       num = len( get_nodes_with_prefix(node_list,action) )
 
-      if action in ['ShowAll','HideAll']:
-         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:}</div>\n'.format(func,text))
+      if action == 'HideAll':
+         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:}</div>\n&nbsp;\n'.format(func,text))
       elif num > 0:
-         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:} ({2:})</div>\n'.format(func,text,num))
+         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:} (<b>{2:}</b>)</div>\n'.format(func,text,num))
+         if i < num_actions-1:
+            html.write('&nbsp;\n')
+
 
    html.write('</div>\n\n')
 
