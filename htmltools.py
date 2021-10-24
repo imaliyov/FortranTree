@@ -74,7 +74,7 @@ def print_image_map(html, image_width, image_height, corner_dict):
    html.write('</map>\n\n')
 
 
-def print_css_style(html):
+def print_css_style(html,action_dict):
    
    info_block_width = 500 # in px
 
@@ -188,39 +188,46 @@ def print_css_style(html):
    html.write('   font-family: Arial, Helvetica, sans-serif;\n')
    html.write('}\n\n')
 
-   html.write('.ShowAll{\n')
-   html.write('   color: #A77700;\n')
-   html.write('   background: #F5F3DE;\n')
-   html.write('}\n\n')
-
-   html.write('.HideAll{\n')
-   html.write('   background: #E3E3E3;\n')
-   html.write('}\n\n')
-
-   html.write('.ShowAllSubr{\n')
-   html.write('   color: #A77700;\n')
-   html.write('   background: #F5F3DE;\n')
-   html.write('}\n\n')
-
-   html.write('.ShowAllFunc{\n')
-   html.write('   color: #A77700;\n')
-   html.write('   background: #F5F3DE;\n')
-   html.write('}\n\n')
-   
-   html.write('.ShowAllInter{\n')
-   html.write('   color: #A77700;\n')
-   html.write('   background: #F5F3DE;\n')
-   html.write('}\n\n')
-   
-   html.write('.ShowAllExt{\n')
-   html.write('   color: #A77700;\n')
-   html.write('   background: #F5F3DE;\n')
-   html.write('}\n\n')
+   for action in action_dict.keys():
+      html.write('.{:}{{\n'.format(action_dict[action]['func']))
+      html.write('   color: #{:};\n'.format(action_dict[action]['func']))
+      html.write('   background: #{:};\n'.format(action_dict[action]['backgr']))
+      html.write('}\n\n')
 
    html.write('</style>\n\n')
 
+def get_nodes_with_prefix(node_list,prefix):
+
+   node_list_with_prefix = []
+   for node in node_list:
+      if node.startswith(prefix):
+         node_list_with_prefix.append(node)
+
+   return node_list_with_prefix
+
+def print_jquery_highlight_action(html,action_id,node_list,prefix):
+   """
+   Print jQuery functions to highlight nodes when action buttons are hovered
+   """
+
+   node_list_with_prefix = get_nodes_with_prefix(node_list,prefix)
+
+   if len(node_list_with_prefix) > 0:
+      html.write('   $("#{:}").mouseover(function(e) {{\n'.format(action_id))
+
+      for node in get_nodes_with_prefix(node_list,prefix):
+         html.write('      $("#{:}").mouseover();\n'.format(node))
+      html.write('   }).mouseout(function(e) {\n')
+
+      for node in get_nodes_with_prefix(node_list,prefix):
+         html.write('      $("#{:}").mouseout();\n'.format(node))
+      html.write('   }).click(function(e) { e.preventDefault(); });\n\n')
+
 def print_maphilight(html, node_list):
-   
+   """
+   Print jQuery functions for maphilight
+   """
+
    html.write('<!-- Load jquery -->\n')
    html.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>\n\n')
 
@@ -229,18 +236,25 @@ def print_maphilight(html, node_list):
 
    html.write('<!-- Activate maphilight plugin -->\n')
    html.write('<script type="text/javascript">$(function() {\n')
-   html.write('        $(\'.map\').maphilight();\n\n')
+   html.write('   $(\'.map\').maphilight();\n\n')
 
-   html.write('/* Highlight a node on graph if the info block is hovered */\n\n')
+   html.write('   /* Highlight a node on graph if the info block is hovered */\n')
+   html.write('   $(".info_sub_block_container").mouseover(function(e) {\n')
+   html.write('      elem_id = this.id.replace("node_","")\n')
+   html.write('      $("#"+elem_id).mouseover();\n')
+   html.write('   }).mouseout(function(e) {\n')
+   html.write('      $("#"+elem_id).mouseout();\n')
+   html.write('   }).click(function(e) { e.preventDefault(); });\n\n')
 
-   html.write('        $(".info_sub_block_container").mouseover(function(e) {\n')
-   html.write('            elem_id = this.id.replace("node_","")\n')
-   html.write('            $("#"+elem_id).mouseover();\n')
-   html.write('        }).mouseout(function(e) {\n')
-   html.write('            $("#"+elem_id).mouseout();\n')
-   html.write('        }).click(function(e) { e.preventDefault(); });\n\n')
+   html.write('/* Highlight nodes when action buttons are hovered */\n')
 
-   html.write('    });\n')
+   print_jquery_highlight_action(html,'actionShowAll',node_list,'')
+   print_jquery_highlight_action(html,'actionShowSubr',node_list,'Subroutine')
+   print_jquery_highlight_action(html,'actionShowFunc',node_list,'Function')
+   print_jquery_highlight_action(html,'actionShowInter',node_list,'Interface')
+   print_jquery_highlight_action(html,'actionShowExt',node_list,'External')
+
+   html.write('   });\n')
    html.write('</script>\n\n')
 
 def print_script_show_blocks(html):
@@ -328,42 +342,42 @@ def print_script_show_blocks(html):
    html.write('   elem.style.display = "none";\n')
    html.write('} \n\n')
 
-   html.write('function ShowAllNodes() {\n')
+   html.write('function ShowAll() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function HideAllNodes() {\n')
+   html.write('function HideAll() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "none";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function ShowAllFunctions() {\n')
+   html.write('function ShowFunc() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_Function]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function ShowAllSubroutines() {\n')
+   html.write('function ShowSubr() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_Subroutine]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function ShowAllInterfaces() {\n')
+   html.write('function ShowInter() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_Interface]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
    html.write('     }\n')
    html.write('}\n\n')
 
-   html.write('function ShowAllExternal() {\n')
+   html.write('function ShowExt() {\n')
    html.write('   var modeblocks = document.querySelectorAll("[id^=node_External]");\n')
    html.write('      for (var i = 0; i < modeblocks.length; i++) {\n')
    html.write('      modeblocks[i].style.display = "block";\n')
@@ -385,6 +399,7 @@ def print_node_info(html, callable_dict, node_list):
    for node in node_list:
 
       node_name = node.split('-')[1]
+      node_type = node.split('-')[0]
 
       html.write('<div id="node_{:}" class="info_sub_block_container" >\n'.format(node))
 
@@ -417,7 +432,57 @@ def print_node_info(html, callable_dict, node_list):
    html.write('<!-- info block wrapper-->\n')
    html.write('</div>\n\n')
 
+def set_action_dict():
+   """
+   Set up a dictionary that contains colors and actions for each node type
+   """
+   action_dict = {
+      'ShowAll': { 
+         'backgr' : 'FFFFFF', 
+         'font'   : '000000',
+         'func' : 'ShowAll',
+         'text' : 'Show all nodes',
+         },
+      'HideAll': { 
+         'backgr' : 'E3E3E3', 
+         'font'   : '000000',
+         'func' : 'HideAll',
+         'text': 'Hide all nodes',
+         },
+      'Subroutine': { 
+         'backgr' : 'FFCAAA', 
+         'font'   : '552000',
+         'func' : 'ShowSubr',
+         'text': 'Show subroutines',
+         },
+      'Function': { 
+         'backgr' : 'FFE0AA', 
+         'font'   : '805915',
+         'func' : 'ShowFunc',
+         'text': 'Show functions',
+         },
+      'Interface': { 
+         'backgr' : 'b4bed0', 
+         'font'   : '152D54',
+         'func' : 'ShowInter',
+         'text': 'Show interfaces',
+         },
+      'External': { 
+         'backgr' : 'B5E4D8', 
+         'font'   : '003729',
+         'func' : 'ShowExt',
+         'text': 'Show external nodes',
+         },
+   }
+
+   return action_dict
+
 def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_node):
+
+   #
+   # Dictionary that contains colors and actions for each node type
+   #
+   action_dict = set_action_dict()
 
    #
    # HTML file
@@ -438,7 +503,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
 
    print_script_show_blocks(html)
 
-   print_css_style(html)
+   print_css_style(html,action_dict)
 
    html.write('</head>\n\n')
 
@@ -455,13 +520,11 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #html.write('<p style="font-size:120%; text-align: center;">Click on a node to get its description.</p>\n\n')
 
    html.write('<div class="actionBlocksContainer">\n')
-   html.write('<div class="actionBlock ShowAll" onclick="ShowAllNodes()">Show all nodes</div>\n')
-   html.write('<div class="actionBlock HideAll" onclick="HideAllNodes()">Hide all nodes</div>\n')
 
-   html.write('<div class="actionBlock ShowAllSubr" onclick="ShowAllSubroutines()">Show all subroutines</div>\n')
-   html.write('<div class="actionBlock ShowAllFunc" onclick="ShowAllFunctions()">Show all functions</div>\n')
-   html.write('<div class="actionBlock ShowAllInter" onclick="ShowAllInterfaces()">Show all interfaces</div>\n')
-   html.write('<div class="actionBlock ShowAllExt" onclick="ShowAllExternal()">Show all external nodes</div>\n')
+   for action in action_dict.keys():
+      func = action_dict[action]['func']
+      text = action_dict[action]['text']
+      html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:}</div>\n'.format(func,text))
 
    html.write('</div>\n\n')
 
