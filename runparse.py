@@ -116,7 +116,7 @@ def create_callable_graph_dict(callable_dict):
 
       graph_dict[name] = tmp_call_dict
 
-   print('\nDone: {:.2f} s'.format(tnow() - t1))
+   print('Done: {:.2f} s'.format(tnow() - t1))
 
    return graph_dict
 
@@ -157,7 +157,7 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=[]
       if node not in all_successors and node != root_node:
          call_graph.delete_node(node)
 
-   print('\nDone: {:.2f} s'.format(tnow() - t1))
+   print('Done: {:.2f} s'.format(tnow() - t1))
 
    return call_graph
 
@@ -299,7 +299,15 @@ def main():
    prefix_node_list = get_prefix_node_list(callable_dict,sorted_node_list)
    node_type_dict = get_node_type_dict(callable_dict,sorted_node_list)
 
+   #
+   # Dump HTML
+   #
+   t1 = tnow()
+   print('\nCreating HTML file')
+
    htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, args.root_node)
+
+   print('Done: {:.2f} s'.format(tnow() - t1))
 
    #
    # Copy the js scipt for the node highlights

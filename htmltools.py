@@ -74,7 +74,7 @@ def print_image_map(html, image_width, image_height, corner_dict):
    html.write('</map>\n\n')
 
 
-def print_css_style(html,action_dict):
+def print_css_style(html,action_dict, image_width):
    
    info_block_width = 500 # in px
 
@@ -101,7 +101,7 @@ def print_css_style(html,action_dict):
    #
    html.write('.info_block_wrapper{\n')
    html.write('   position: absolute;\n')
-   html.write('   left: 608px;\n')
+   html.write('   left: {:}px;\n'.format(image_width))
    html.write('   overflow: auto;\n')
    html.write('   top: auto;\n')
    html.write('}\n')
@@ -188,10 +188,19 @@ def print_css_style(html,action_dict):
    html.write('   font-family: Arial, Helvetica, sans-serif;\n')
    html.write('}\n\n')
 
+   html.write('/* Style for action buttons */\n')
    for action in action_dict.keys():
       html.write('.{:}{{\n'.format(action_dict[action]['func']))
-      html.write('   color: #{:};\n'.format(action_dict[action]['func']))
+      html.write('   color: #{:};\n'.format(action_dict[action]['font']))
       html.write('   background: #{:};\n'.format(action_dict[action]['backgr']))
+      html.write('}\n\n')
+
+   html.write('/* Style for node-specific info blocks */\n')
+   for action in action_dict.keys():
+      if action in ['ShowAll','HideAll']:
+         continue
+      html.write('.{:}{{\n'.format(action))
+      html.write('   background: #{:};\n'.format(action_dict[action]['backgr2']))
       html.write('}\n\n')
 
    html.write('</style>\n\n')
@@ -386,7 +395,7 @@ def print_script_show_blocks(html):
 
    html.write('</script>\n\n')
 
-def print_node_info(html, callable_dict, node_list):
+def print_node_info(html, callable_dict, node_list, action_dict):
 
    html.write('<!-- Nodes description -->\n\n')
 
@@ -403,7 +412,7 @@ def print_node_info(html, callable_dict, node_list):
 
       html.write('<div id="node_{:}" class="info_sub_block_container" >\n'.format(node))
 
-      html.write('<div id="box_node_{:}" class="info_sub_block" >\n'.format(node))
+      html.write('<div id="box_node_{:}" class="info_sub_block {:}">\n'.format(node,node_type))
 
       # Close "button"
       html.write('<div onclick="CloseDivById(\'{:}\')" class="closeDiv">&#215;</div>\n\n'.format(node))
@@ -450,26 +459,31 @@ def set_action_dict():
          'text': 'Hide all nodes',
          },
       'Subroutine': { 
-         'backgr' : 'FFCAAA', 
-         'font'   : '552000',
+         #'backgr' : 'F5F3DE',
+         'backgr' : 'FFE0AA', 
+         'backgr2' : 'fff0d6', 
+         'font'   : '654610',
          'func' : 'ShowSubr',
          'text': 'Show subroutines',
          },
       'Function': { 
-         'backgr' : 'FFE0AA', 
-         'font'   : '805915',
+         'backgr' : 'FFCAAA', 
+         'backgr2' : 'ffe0cc', 
+         'font'   : '552000',
          'func' : 'ShowFunc',
          'text': 'Show functions',
          },
       'Interface': { 
-         'backgr' : 'b4bed0', 
+         'backgr' : 'bdc6d6', 
+         'backgr2' : 'd9dfe7', 
          'font'   : '152D54',
          'func' : 'ShowInter',
          'text': 'Show interfaces',
          },
       'External': { 
-         'backgr' : 'B5E4D8', 
-         'font'   : '003729',
+         'backgr' : 'bfe8de', 
+         'backgr2' : 'e9f7f3', 
+         'font'   : '003326',
          'func' : 'ShowExt',
          'text': 'Show external nodes',
          },
@@ -483,6 +497,11 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    # Dictionary that contains colors and actions for each node type
    #
    action_dict = set_action_dict()
+
+   #
+   # Node coordinates from svg
+   #
+   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list, node_type_dict)
 
    #
    # HTML file
@@ -503,7 +522,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
 
    print_script_show_blocks(html)
 
-   print_css_style(html,action_dict)
+   print_css_style(html,action_dict, image_width)
 
    html.write('</head>\n\n')
 
@@ -524,17 +543,17 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    for action in action_dict.keys():
       func = action_dict[action]['func']
       text = action_dict[action]['text']
-      html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:}</div>\n'.format(func,text))
+      num = len( get_nodes_with_prefix(node_list,action) )
+
+      if action in ['ShowAll','HideAll']:
+         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:}</div>\n'.format(func,text))
+      elif num > 0:
+         html.write('<div class="actionBlock {0:}" id="action{0:}" onclick="{0:}()">{1:} ({2:})</div>\n'.format(func,text,num))
 
    html.write('</div>\n\n')
 
    html.write('<br>\n'*2)
    html.write('\n'*2)
-
-   #
-   # Node coordinates from svg
-   #
-   image_width, image_height, corner_dict = get_node_coord(svg_path, node_list, node_type_dict)
 
    print_image_map(html, image_width, image_height, corner_dict)
 
@@ -555,7 +574,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #
    # Nodes description
    #
-   print_node_info(html, callable_dict, node_list)
+   print_node_info(html, callable_dict, node_list, action_dict)
 
    html.write('<!-- wrapper div -->\n')
    html.write('</div>\n\n')
