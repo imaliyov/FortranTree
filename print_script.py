@@ -190,5 +190,30 @@ def print_script_show_blocks(html):
 
    html.write('</script>\n\n')
 
+def print_collapsible_func(html):
+   """
+   Functions for collapsibles in the info blocks
+   """
+
+   html.write('<script>\n')
+   html.write('$(function() {\n')
+   html.write('var coll = document.getElementsByClassName("collapsible");\n')
+   html.write('var i;\n\n')
+   html.write('for (i = 0; i < coll.length; i++) {\n')
+   html.write('   coll[i].addEventListener("click", function() {\n')
+   html.write('   this.classList.toggle("active");\n')
+   html.write('   var content = this.nextElementSibling;\n')
+   html.write('   if (content.style.display === "block") {\n')
+   html.write('      this.innerHTML = \'<font size="1">\'+\'&#9660;\'.repeat(1)+\'</font>\'+\'&nbsp;\'.repeat(10)+\'Mandatory/Optional\'+\'&nbsp;\'.repeat(10)+\'<font size="1">\'+\'&#9660;\'.repeat(1) + \'</font>\'\n')
+   html.write('      content.style.display = "none";\n')
+   html.write('   } else {\n')
+   html.write('      this.innerHTML = \'<font size="1">\'+\'&#9650;\'.repeat(1)+\'</font>\'+\'&nbsp;\'.repeat(10)+\'Mandatory/Optional\'+\'&nbsp;\'.repeat(10)+\'<font size="1">\'+\'&#9650;\'.repeat(1) + \'</font>\'\n')
+   html.write('      content.style.display = "block";\n')
+   html.write('   }\n')
+   html.write('   });\n')
+   html.write('}\n')
+   html.write('});\n\n')
+   html.write('</script>\n\n')
+
 if __name__ == '__main__':
    sys.exit('This file is not inteded to be run as __main__')
