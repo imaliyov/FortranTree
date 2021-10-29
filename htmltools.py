@@ -85,22 +85,71 @@ def get_nodes_with_prefix(node_list,prefix):
 
    return node_list_with_prefix
 
-def print_module_use(html,node_obj,node_name):
+def get_id_button(node_name,prefix):
+   return f"collapsibleButton_{prefix}_{node_name}"
 
-   text = 'Uses modules'
+def get_id_content(node_name,prefix):
+   return f"collapsibleContent_{prefix}_{node_name}"
 
-   id_button = f"collapsibleButton_{node_name}"
-   id_content = f"collapsibleContent_{node_name}"
+def collapsible_text(id_content,id_button,text):
+   """
+   Text on the collapsible button
+   """
+
+   collapse_text = f'<button type="button" onclick="OpenCloseCollapsible(\'{id_content}\',\'{id_button}\',\'{text}\')" class="collapsible" id="{id_button}">'+'<font size="0.7em">'+'&#9660;'+'</font>'+'&nbsp;'*10+text+'&nbsp;'*10+'<font size="0.7em">'+'&#9660;'*1+'</font>'+'</button>'
+
+   return collapse_text
+
+def print_collapsible_button(html,node_name,id_content,prefix,text):
+   """
+   Print the div of the collapsible button
+   """
+
+   id_button = get_id_button(node_name,prefix)
+
+   collapse_text = collapsible_text(id_content,id_button,text)
+
+   html.write(collapse_text+'\n')
+
+def print_uses_modules(html,node_obj,node_name):
 
    if len(node_obj.uses) == 0:
       return
 
-   html.write(f'<button type="button" onclick="OpenCloseCollapsible(\'{id_content}\',\'{id_button}\',\'{text}\')" class="collapsible" id="{id_button}">'+'<font size="0.7em">'+'&#9660;'+'</font>'+'&nbsp;'*10+text+'&nbsp;'*10+'<font size="0.7em">'+'&#9660;'*1+'</font>'+'</button>')
-   html.write(f'<div class="collapsibleContent" id="collapsibleContent_{node_name}">\n')
+   prefix = 'modules'
+   id_content = get_id_content(node_name,prefix)
+   print_collapsible_button(html,node_name,id_content,prefix,'Uses modules')
+
+   html.write(f'<div class="collapsibleContent" id="{id_content}">\n')
    html.write('<div class="collapsibleText">\n')
 
    for usename in node_obj.uses:
-      html.write(f'<code> {usename} </code>\n')
+      html.write(f'<code> {usename},&nbsp </code>\n')
+
+   html.write('\n<!--collapsibleText -->\n')
+   html.write('</div>\n\n')
+
+   html.write('\n<!--collapsibleContent -->\n')
+   html.write('</div>\n')
+   html.write('<br>\n'*2)
+
+def print_array_allocations(html,node_obj,node_name):
+
+   if len(node_obj.alloc) == 0:
+      return
+
+   prefix = 'arrays'
+   id_content = get_id_content(node_name,prefix)
+   print_collapsible_button(html,node_name,id_content,prefix,'Array allocations')
+
+   html.write(f'<div class="collapsibleContent" id="{id_content}">\n')
+   html.write('<div class="collapsibleText">\n')
+
+   html.write('<i> Allocated arrays: </i><br>\n')
+   html.write('\n')
+
+   for array in node_obj.alloc:
+      html.write(f'<code> {array.name},&nbsp </code>\n')
 
    html.write('\n<!--collapsibleText -->\n')
    html.write('</div>\n\n')
@@ -138,7 +187,11 @@ def print_node_info(html, callable_dict, node_list, action_dict):
          html.write('<p><i>File</i>: {:}</p>\n'.format(node_obj.filename))
          html.write('<p><i>Line</i>: {:} &ensp;<i>Num. of lines</i>: {:}</p>\n\n'.format(node_obj.nfirst_line,node_obj.nlines))
 
-         print_module_use(html,node_obj,node_name)
+         print_uses_modules(html,node_obj,node_name)
+
+         html.write('<br>\n')
+
+         print_array_allocations(html,node_obj,node_name)
 
       else:
          html.write('<p style="font-size:1.2em;"><i>External node</i>:&nbsp; <b>{:}</b></p>\n'.format(node_name))

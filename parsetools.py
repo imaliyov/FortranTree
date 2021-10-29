@@ -455,7 +455,8 @@ class MyInterface(MyNode):
       self.procedures = self.get_procedure_name_list()
    
    def update_interface_attrs(self,callable_dict):
-      attrname_list = ['calls','uses','subroutines','functions']
+      #attrname_list = ['calls','uses','subroutines','functions']
+      attrname_list = ['calls','uses','subroutines','functions','alloc','dealloc','alloc_wo_dealloc','dealloc_wo_alloc']
       
       for attrname in attrname_list:
          setattr(self,attrname,[])
