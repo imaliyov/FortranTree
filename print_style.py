@@ -173,15 +173,21 @@ def print_css_style(html,action_dict, image_width):
 
    html.write('/* Style the collapsible content. Hidden by default */\n')
    html.write('.collapsibleContent {\n')
-   html.write('  padding-left: 3%;\n')
    html.write('  padding-bottom: 2%;\n')
-   html.write('  padding-right: calc(97% - 6px);\n')
    html.write('  padding-top: 3%;\n')
    html.write('  display: none;\n')
    html.write('  overflow: hidden;\n')
    html.write('  background-color: #ccc;\n')
    html.write('  border-left: solid 6px #888888;\n')
    html.write('  border-radius: 0 0 5px 5px\n')
+   html.write('}\n\n')
+
+   html.write('.collapsibleText{\n')
+   html.write('   width: 100%;\n')
+   html.write('   line-height: normal;\n')
+   html.write('   white-space: normal;\n')
+   html.write('   margin-left: 10px;\n')
+   html.write('   font-size: 1.1em;\n')
    html.write('}\n\n')
 
    html.write('</style>\n\n')

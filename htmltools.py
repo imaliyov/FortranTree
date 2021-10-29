@@ -97,10 +97,13 @@ def print_module_use(html,node_obj,node_name):
 
    html.write(f'<button type="button" onclick="OpenCloseCollapsible(\'{id_content}\',\'{id_button}\',\'{text}\')" class="collapsible" id="{id_button}">'+'<font size="0.7em">'+'&#9660;'+'</font>'+'&nbsp;'*10+text+'&nbsp;'*10+'<font size="0.7em">'+'&#9660;'*1+'</font>'+'</button>')
    html.write(f'<div class="collapsibleContent" id="collapsibleContent_{node_name}">\n')
-   html.write('<nobr>\n')
+   html.write('<div class="collapsibleText">\n')
 
    for usename in node_obj.uses:
       html.write(f'<code> {usename} </code>\n')
+
+   html.write('\n<!--collapsibleText -->\n')
+   html.write('</div>\n\n')
 
    html.write('\n<!--collapsibleContent -->\n')
    html.write('</div>\n')
