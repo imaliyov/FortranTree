@@ -85,13 +85,18 @@ def get_nodes_with_prefix(node_list,prefix):
 
    return node_list_with_prefix
 
-def print_module_use(html,node_obj):
+def print_module_use(html,node_obj,node_name):
+
+   text = 'Uses modules'
+
+   id_button = f"collapsibleButton_{node_name}"
+   id_content = f"collapsibleContent_{node_name}"
 
    if len(node_obj.uses) == 0:
       return
 
-   html.write('<button type="button" class="collapsible">'+'&#9660;'+'&nbsp;'*10+'Uses modules'+'&nbsp;'*10+'&#9660;'*1+'</button>')
-   html.write('<div class="collapsibleContent">\n')
+   html.write(f'<button type="button" onclick="OpenCloseCollapsible(\'{id_content}\',\'{id_button}\',\'{text}\')" class="collapsible" id="{id_button}">'+'<font size="0.7em">'+'&#9660;'+'</font>'+'&nbsp;'*10+text+'&nbsp;'*10+'<font size="0.7em">'+'&#9660;'*1+'</font>'+'</button>')
+   html.write(f'<div class="collapsibleContent" id="collapsibleContent_{node_name}">\n')
    html.write('<nobr>\n')
 
    for usename in node_obj.uses:
@@ -130,7 +135,7 @@ def print_node_info(html, callable_dict, node_list, action_dict):
          html.write('<p><i>File</i>: {:}</p>\n'.format(node_obj.filename))
          html.write('<p><i>Line</i>: {:} &ensp;<i>Num. of lines</i>: {:}</p>\n\n'.format(node_obj.nfirst_line,node_obj.nlines))
 
-         print_module_use(html,node_obj)
+         print_module_use(html,node_obj,node_name)
 
       else:
          html.write('<p style="font-size:1.2em;"><i>External node</i>:&nbsp; <b>{:}</b></p>\n'.format(node_name))

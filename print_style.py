@@ -161,7 +161,7 @@ def print_css_style(html,action_dict, image_width):
    html.write('  border: none;\n')
    html.write('  text-align: center;\n')
    html.write('  outline: none;\n')
-   html.write('  font-size: 11px;\n')
+   html.write('  font-size: 0.8em;\n')
    html.write('  border-left: solid 6px #888888;\n')
    html.write('  margin-bottom:-10px;\n')
    html.write('}\n\n')
