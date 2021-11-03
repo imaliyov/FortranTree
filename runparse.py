@@ -210,6 +210,35 @@ def get_prefix_node_list(callable_dict, node_list):
 
    return prefix_node_list
 
+def create_graph_for_node(root_node,graph_dict,callable_dict,hide_from_files,hide_nodes,path,img_dir,svg_path):
+   """
+   Callable graph creation (including HTML) for a given root node
+   """
+
+   call_graph = create_call_graph(graph_dict,callable_dict,root_node,hide_from_files=hide_from_files,hide_nodes=hide_nodes )
+
+   call_graph.node_attr['shape']='rectangle'
+   call_graph.graph_attr['rankdir']='LR'
+   call_graph.layout(prog='dot')
+
+   call_graph.draw(svg_path)
+   call_graph.draw('{:}.png'.format(root_node))
+
+   sorted_node_list = get_sorted_node_list(call_graph)
+   prefix_node_list = get_prefix_node_list(callable_dict,sorted_node_list)
+   node_type_dict = get_node_type_dict(callable_dict,sorted_node_list)
+
+   #
+   # Dump HTML
+   #
+   t1 = tnow()
+   print('\nCreating HTML file')
+
+   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, path, root_node)
+
+   print('Done: {:.2f} s'.format(tnow() - t1))
+
+
 def main():
 
    #
@@ -220,7 +249,7 @@ def main():
    cmd_parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description=help_description)
 
    cmd_parser.add_argument('-p','--path',help='Path to the source code',required = True)
-   cmd_parser.add_argument('-r','--root-node',help='Name of the root node. The call tree will be ploted from the root node.', type=str, required=True)
+   cmd_parser.add_argument('-r','--root-node-list',help='List of root node names. The call tree will be ploted from the root nodes of the list.', nargs='*', type=str, required=True)
    cmd_parser.add_argument('-y','--hide-from-yaml',help='Hide the callables that are in specific files or select them by name, contained in the yaml file. The file must have the dictionary structure with the following keys: files: [List of files] and/or nodes: [List of nodes].',type=str,required = False,default=None)
    cmd_parser.add_argument('--exclude-files',help='List of file to exclude from parsing',nargs='*',required = False,default=[])
    cmd_parser.add_argument('--hide-from-files',help='List of files. If a suboutine/function is implemented in one of these files, it will be hidden in the graph.',nargs='*',required = False,default=[])
@@ -247,11 +276,8 @@ def main():
    #
    # Test
    #
-   #obj = callable_dict['init_boltz_grid']
-   obj = callable_dict['transport']
-   #obj = callable_dict['hdf_write_dataset']
-   #obj = callable_dict['hdf_read_attr_integer_1']
-   print_object_attributes(obj)
+   #obj = callable_dict['transport']
+   #print_object_attributes(obj)
 
    # maybe, the built in comparison works...
    #print(callable_dict['transport']==callable_dict['transport'])
@@ -279,35 +305,18 @@ def main():
       if 'nodes' in hide_dict.keys():
          hide_nodes += hide_dict['nodes']
 
-   call_graph = create_call_graph(graph_dict,callable_dict,args.root_node,hide_from_files=args.hide_from_files,hide_nodes=args.hide_nodes )
-
-   call_graph.node_attr['shape']='rectangle'
-   call_graph.graph_attr['rankdir']='LR'
-   call_graph.layout(prog='dot')
-
    #
-   # Create the directory for images and save the svg file
+   # Callable graph creation (including HTML) for a given root node
    #
-   img_dir = 'images/callgraph'
-   os.makedirs(img_dir, exist_ok=True)
-   svg_path = os.path.join(img_dir,'{:}.svg'.format(args.root_node))
+   for root_node in args.root_node_list:
 
-   call_graph.draw(svg_path)
-   call_graph.draw('{:}.png'.format(args.root_node))
+      print(f'\n=== ROOT NODE: {root_node} ===\n')
 
-   sorted_node_list = get_sorted_node_list(call_graph)
-   prefix_node_list = get_prefix_node_list(callable_dict,sorted_node_list)
-   node_type_dict = get_node_type_dict(callable_dict,sorted_node_list)
+      img_dir = 'images/callgraph'
+      os.makedirs(img_dir, exist_ok=True)
+      svg_path = os.path.join(img_dir,'{:}.svg'.format(root_node))
 
-   #
-   # Dump HTML
-   #
-   t1 = tnow()
-   print('\nCreating HTML file')
-
-   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, args.root_node)
-
-   print('Done: {:.2f} s'.format(tnow() - t1))
+      create_graph_for_node(root_node,graph_dict,callable_dict,args.hide_from_files,hide_nodes,args.path,img_dir,svg_path)
 
    #
    # Copy the js scipt for the node highlights
