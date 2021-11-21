@@ -9,7 +9,7 @@ import pygraphviz as pgv
 import textwrap
 import argparse
 
-import htmltools
+import htmltools, graphtools
 
 from parsetools import  get_parse_tree_dict, \
                         get_global_node_dict, \
@@ -23,6 +23,8 @@ from fparser.two import Fortran2003
 from datetime import datetime
 import time
 
+import pickle
+
 from yaml import load, dump
 try:
    from yaml import CLoader as Loader, CDumper as Dumper
@@ -30,7 +32,8 @@ except ImportError:
    from yaml import Loader, Dumper
 
 #tnow = datetime.now
-tnow = time.time
+#tnow = time.time
+tnow = time.perf_counter
 start_time = tnow()
 
 def str_examples():
@@ -85,26 +88,12 @@ def create_callable_dict(path,source_file_list):
 
    return callable_dict
 
-def get_all_graph_successors(graph,node,glob_list=None):
-
-   if glob_list is None:
-      glob_list = []
-
-   successors = graph.successors(node)
-
-   glob_list += successors
-
-   for successor in successors:
-      get_all_graph_successors(graph,successor,glob_list=glob_list) 
-
-   return glob_list
-      
 def create_callable_graph_dict(callable_dict):
    """
    Using the callable_dict, create a dict that can be processed by pygraphviz
    """
    t1 = tnow()
-   print('\nCreating a graph dictionary')
+   print('\nCreating graph dictionary')
 
    graph_dict = {}
 
@@ -120,59 +109,6 @@ def create_callable_graph_dict(callable_dict):
 
    return graph_dict
 
-def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=[],hide_nodes=[]):
-   """
-   Create a pygraphviz graph based on callable_dict
-   """
-   t1 = tnow()
-   print('\nCreating a graph')
-
-   call_graph = pgv.AGraph(graph_dict,strict=False,directed=True)#.reverse()
-
-   root_node = call_graph.get_node(root_node_name)
-
-   #
-   # Remove the nodes that are from the files in hide_from_files list
-   # or if a node is in hide_nodes list
-   #
-   if len(hide_from_files) > 0 or len(hide_nodes) > 0:
-
-      for node in call_graph.nodes():
-
-         node_in_list = node in hide_nodes
-
-         node_from_hid_file = \
-            node in callable_dict.keys() and \
-            callable_dict[node].filename in hide_from_files 
-
-         if node_in_list or node_from_hid_file:
-            call_graph.delete_node(node)
-   
-   #
-   # Remove all the nodes that are not the successors of the root node
-   #
-   all_successors = get_all_graph_successors(call_graph,root_node)
-
-   for node in call_graph.nodes():
-      if node not in all_successors and node != root_node:
-         call_graph.delete_node(node)
-
-   print('Done: {:.2f} s'.format(tnow() - t1))
-
-   return call_graph
-
-def get_node_depth(graph,node,depth=0):
-   """
-   Get the depth of the node (an integer) using the predecessors method.
-   """
-
-   predecessors = graph.predecessors(node)
-   
-   if len(predecessors) > 0:
-      depth = get_node_depth(graph,predecessors[0],depth=depth+1)
-
-   return depth
-
 def get_sorted_node_list(graph):
    """
    Sort the graph nodes according to their depth in the graph and then alphabetic oreder
@@ -180,7 +116,7 @@ def get_sorted_node_list(graph):
 
    node_list = graph.nodes()
 
-   node_list = sorted(node_list, key = lambda x: (get_node_depth(graph,x), x ))
+   node_list = sorted(node_list, key = lambda x: (graphtools.get_node_depth(graph,x), x ))
 
    return node_list
 
@@ -210,19 +146,21 @@ def get_prefix_node_list(callable_dict, node_list):
 
    return prefix_node_list
 
-def create_graph_for_node(root_node,graph_dict,callable_dict,hide_from_files,hide_nodes,path,img_dir,svg_path):
+def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path):
    """
    Callable graph creation (including HTML) for a given root node
    """
 
-   call_graph = create_call_graph(graph_dict,callable_dict,root_node,hide_from_files=hide_from_files,hide_nodes=hide_nodes )
+   call_graph = graphtools.create_call_graph(graph_dict,callable_dict,root_node,hide_from_files=args.hide_from_files,hide_nodes=hide_nodes,allowed_connections=args.allowed_connections )
 
-   call_graph.node_attr['shape']='rectangle'
-   call_graph.graph_attr['rankdir']='LR'
-   call_graph.layout(prog='dot')
+   graphtools.set_graph_param(call_graph, root_node, manual_param_path = args.param_dict)
 
+   t1 = tnow()
+   print('\nDrawing graph')
+   call_graph.write('{:}.dot'.format(root_node))
    call_graph.draw(svg_path)
    call_graph.draw('{:}.png'.format(root_node))
+   print(f'Done: {tnow() - t1:.2f} s')
 
    sorted_node_list = get_sorted_node_list(call_graph)
    prefix_node_list = get_prefix_node_list(callable_dict,sorted_node_list)
@@ -234,44 +172,90 @@ def create_graph_for_node(root_node,graph_dict,callable_dict,hide_from_files,hid
    t1 = tnow()
    print('\nCreating HTML file')
 
-   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, path, root_node)
+   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, root_node)
 
    print('Done: {:.2f} s'.format(tnow() - t1))
 
+def parse_arguments():
+   """
+   Parse command line arguments
+   """ 
 
-def main():
-
-   #
-   # Parse command line arguments
-   #
    help_description = textwrap.dedent(str_examples())
 
    cmd_parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description=help_description)
 
-   cmd_parser.add_argument('-p','--path',help='Path to the source code',required = True)
+   cmd_parser.add_argument('-p','--path',help='Path to the source code',default=None)
    cmd_parser.add_argument('-r','--root-node-list',help='List of root node names. The call tree will be ploted from the root nodes of the list.', nargs='*', type=str, required=True)
    cmd_parser.add_argument('-y','--hide-from-yaml',help='Hide the callables that are in specific files or select them by name, contained in the yaml file. The file must have the dictionary structure with the following keys: files: [List of files] and/or nodes: [List of nodes].',type=str,required = False,default=None)
+   
    cmd_parser.add_argument('--exclude-files',help='List of file to exclude from parsing',nargs='*',required = False,default=[])
    cmd_parser.add_argument('--hide-from-files',help='List of files. If a suboutine/function is implemented in one of these files, it will be hidden in the graph.',nargs='*',required = False,default=[])
    cmd_parser.add_argument('--hide-nodes',help='List of nodes to hide in the graph',nargs='*',required = False,default=[])
-   cmd_parser.add_argument('-m','--module_tree',action='store_true',help='Build the module tree',default=False)
+
+   cmd_parser.add_argument('--param-dict',help='YAML file contatining the graph and node parameters that will overwrite the default ones. ',type=str,required = False,default=None)
+   cmd_parser.add_argument('--allowed-connections',help='YAML file contatining the list of allowed graph connections for specific nodes.',type=str,required = False,default=None)
+   
+   cmd_parser.add_argument('-m','--module-tree',action='store_true',help='Build the module tree',default=False)
+
+   cmd_parser.add_argument('-s','--save',action='store_true',help='Save the parse tree in a file to save time for following runs.',default=False)
+   cmd_parser.add_argument('--load',action='store_true',help='Save the parse tree in a file to save time for following runs.',default=False)
 
    args = cmd_parser.parse_args()
 
+   # Checks
+   if args.path is None and not args.load:
+      sys.exit('One of the options must be specified: \n Path (-p) or Load (--load).')
 
-   #
-   # Create the source code tree fparser
-   #
-   source_folder = os.path.abspath(args.path)
+   return args
+
+def call_dict_from_path(path,exclude_files=[]):
+   """
+   Parse the source folder and return the dictionary of callables
+   """
+   source_folder = os.path.abspath(path)
 
    source_file_list = []
-   for filename in os.listdir(args.path):
-      if filename.upper().endswith('.F90') and filename not in args.exclude_files:
+   for filename in os.listdir(path):
+      if filename.upper().endswith('.F90') and filename not in exclude_files:
          source_file_list.append(filename)
 
    source_file_list = sorted(source_file_list)
 
-   callable_dict = create_callable_dict(args.path,source_file_list)
+   callable_dict = create_callable_dict(path,source_file_list)
+
+   return callable_dict
+
+def save_call_dict(callable_dict,filename='restart_call_dict'):
+
+   sys.exit('RESTART IS NOT IMPLEMENTED')
+
+   with open(filename,'wb') as f:
+      for k,v in callable_dict.items():
+         print(k,v)
+         pickle.dump(callable_dict,f,protocol=pickle.HIGHEST_PROTOCOL) 
+         #json.dump(callable_dict,f) 
+
+def load_call_dict(filename='restart_call_dict'):
+   sys.exit('RESTART IS NOT IMPLEMENTED')
+
+def main():
+
+   args = parse_arguments()
+
+   #
+   # Create the source code tree fparser
+   #
+   if args.path is not None:
+      callable_dict = call_dict_from_path(args.path, exclude_files = args.exclude_files)
+
+      if args.save:
+         save_call_dict(callable_dict,filename='restart_call_dict')
+
+   elif args.load:
+      callable_dict = load_call_dict(filename='restart_call_dict')
+   else:
+      sys.exit('One of the options must be specified: \n Path (-p) or Load (--load).')
 
    #
    # Test
@@ -316,7 +300,7 @@ def main():
       os.makedirs(img_dir, exist_ok=True)
       svg_path = os.path.join(img_dir,'{:}.svg'.format(root_node))
 
-      create_graph_for_node(root_node,graph_dict,callable_dict,args.hide_from_files,hide_nodes,args.path,img_dir,svg_path)
+      create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path)
 
    #
    # Copy the js scipt for the node highlights
