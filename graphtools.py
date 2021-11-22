@@ -79,7 +79,7 @@ def get_all_graph_successors(graph,node,glob_list=None):
 
    return glob_list
 
-def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=None,hide_nodes=None,allowed_connections=None):
+def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=None,hide_nodes=None,allowed_connections=None,forbidden_connections=None):
    """
    Create a pygraphviz graph based on callable_dict
    """
@@ -111,16 +111,10 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=No
    # Allowed connections for specific nodes
    #
    if allowed_connections is not None:
+      modify_node_connections(call_graph,allowed_connections,action='keep')
 
-      with open(allowed_connections ,'r') as stream:
-         allowed_dict = load(stream,Loader=yaml.FullLoader)
-
-      for node_name, connections in  allowed_dict.items():
-         node = call_graph.get_node(node_name)
-
-         for successor in call_graph.itersucc(node):
-            if successor not in connections:
-               call_graph.delete_node(successor)
+   if forbidden_connections is not None:
+      modify_node_connections(call_graph,forbidden_connections,action='exclude')
 
    #
    # Remove all the nodes that are not the successors of the root node
@@ -134,6 +128,29 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=No
    print('Done: {:.2f} s'.format(tnow() - t1))
 
    return call_graph
+
+def modify_node_connections(graph,path_to_dict,action='keep'):
+   """
+   Remove or to keep only some connections of specific nodes.
+   """
+   with open(path_to_dict ,'r') as stream:
+      action_dict = load(stream,Loader=yaml.FullLoader)
+
+   for node_name, connections in  action_dict.items():
+      node = graph.get_node(node_name)
+
+      for successor in graph.itersucc(node):
+
+         if action == 'keep':
+            if successor not in connections:
+               graph.delete_node(successor)
+
+         elif action == 'exclude':
+            if successor in connections:
+               graph.delete_node(successor)
+
+         else:
+            sys.exit(f'Wrong action: {action}')
 
 def apply_node_size_depth(graph,size_init,size_delta,root_node):
    """
@@ -219,6 +236,16 @@ def apply_graph_param(graph,param_dict,root_node):
          else:
             sys.exit('Error in reading graph parameters.')
 
+      # Edge parameters
+      elif key[0] == 'edge':
+         # General node parameters
+         if len(key) == 2:
+            param = key[1]
+            graph.edge_attr[param]=value
+
+         else:
+            sys.exit('Error in reading graph parameters.')
+
       # Meta parameters
       elif key[0] == 'meta':
 
@@ -270,5 +297,4 @@ def set_graph_param(graph, root_node, manual_param_path = None):
       graph_param_dict = graph_param_dict | manual_graph_param_dict
 
    apply_graph_param(graph,graph_param_dict,root_node)
-   graph.graph_attr['overlap']='false'
 

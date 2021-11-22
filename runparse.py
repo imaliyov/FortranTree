@@ -151,7 +151,7 @@ def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img
    Callable graph creation (including HTML) for a given root node
    """
 
-   call_graph = graphtools.create_call_graph(graph_dict,callable_dict,root_node,hide_from_files=args.hide_from_files,hide_nodes=hide_nodes,allowed_connections=args.allowed_connections )
+   call_graph = graphtools.create_call_graph(graph_dict,callable_dict,root_node,hide_from_files=args.hide_from_files,hide_nodes=hide_nodes,allowed_connections=args.allowed_connections, forbidden_connections = args.forbidden_connections )
 
    graphtools.set_graph_param(call_graph, root_node, manual_param_path = args.param_dict)
 
@@ -195,6 +195,7 @@ def parse_arguments():
 
    cmd_parser.add_argument('--param-dict',help='YAML file contatining the graph and node parameters that will overwrite the default ones. ',type=str,required = False,default=None)
    cmd_parser.add_argument('--allowed-connections',help='YAML file contatining the list of allowed graph connections for specific nodes.',type=str,required = False,default=None)
+   cmd_parser.add_argument('--forbidden-connections',help='YAML file contatining the list of forbidden graph connections for specific nodes.',type=str,required = False,default=None)
    
    cmd_parser.add_argument('-m','--module-tree',action='store_true',help='Build the module tree',default=False)
 
