@@ -111,9 +111,9 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=No
    #
    all_successors = get_all_graph_successors(call_graph,root_node)
 
-   for node in call_graph.nodes():
-      if node not in all_successors and node != root_node:
-         safely_delete_node(call_graph,node)
+   #for node in call_graph.nodes():
+   #   if node not in all_successors and node != root_node:
+   #      safely_delete_node(call_graph,node)
 
    print('Done: {:.2f} s'.format(tnow() - t1))
 

@@ -151,7 +151,7 @@ def get_prefix_node_list(callable_dict, node_list):
 
    return prefix_node_list
 
-def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path):
+def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path, module_tree = False):
    """
    Callable graph creation (including HTML) for a given root node
    """
@@ -162,9 +162,15 @@ def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img
 
    t1 = tnow()
    print('\nDrawing graph')
-   call_graph.write('{:}.dot'.format(root_node))
+
+   if module_tree:
+      basename = f'module_tree_{root_node}'
+   else:
+      basename = f'call_graph_{root_node}'
+
+   call_graph.write(f'{basename}.dot')
+   call_graph.draw(f'{basename}.png')
    call_graph.draw(svg_path)
-   call_graph.draw('{:}.png'.format(root_node))
    print(f'Done: {tnow() - t1:.2f} s')
 
    sorted_node_list = get_sorted_node_list(call_graph)
@@ -309,7 +315,7 @@ def main():
       os.makedirs(img_dir, exist_ok=True)
       svg_path = os.path.join(img_dir,'{:}.svg'.format(root_node))
 
-      create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path)
+      create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img_dir,svg_path, module_tree = args.module_tree)
 
    #
    # Copy the js scipt for the node highlights
