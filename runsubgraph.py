@@ -20,7 +20,6 @@ except ImportError:
 
 tnow = time.perf_counter
 
-
 def main():
 
    subgraph_dict = {

@@ -158,7 +158,7 @@ def print_array_allocations(html,node_obj,node_name):
    html.write('</div>\n')
    html.write('<br>\n'*2)
 
-def print_node_info(html, callable_dict, node_list, action_dict):
+def print_node_info(html, callable_dict, node_list, action_dict, module_tree = False):
 
    html.write('<!-- Nodes description -->\n\n')
 
@@ -185,13 +185,19 @@ def print_node_info(html, callable_dict, node_list, action_dict):
 
          html.write('<p style="font-size:1.2em;"><i>{:}</i>:&nbsp; <b>{:}</b></p>\n'.format(node_obj.type,node_obj.name))
          html.write('<p><i>File</i>: {:}</p>\n'.format(node_obj.filename))
-         html.write('<p><i>Line</i>: {:} &ensp;<i>Num. of lines</i>: {:}</p>\n\n'.format(node_obj.nfirst_line,node_obj.nlines))
 
-         print_uses_modules(html,node_obj,node_name)
+         if module_tree:
+            pass
+            # print_module_info()
 
-         html.write('<br>\n')
+         else:
+            html.write('<p><i>Line</i>: {:} &ensp;<i>Num. of lines</i>: {:}</p>\n\n'.format(node_obj.nfirst_line,node_obj.nlines))
 
-         print_array_allocations(html,node_obj,node_name)
+            print_uses_modules(html,node_obj,node_name)
+
+            html.write('<br>\n')
+
+            print_array_allocations(html,node_obj,node_name)
 
       else:
          html.write('<p style="font-size:1.2em;"><i>External node</i>:&nbsp; <b>{:}</b></p>\n'.format(node_name))
@@ -259,7 +265,7 @@ def set_action_dict():
 
    return action_dict
 
-def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_node):
+def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_node, module_tree = False):
 
    #
    # Dictionary that contains colors and actions for each node type
@@ -274,7 +280,13 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #
    # HTML file
    #
-   html_filename = 'call_graph_{:}.html'.format(root_node)
+   if module_tree:
+      html_filename = 'module_tree_{:}.html'.format(root_node)
+      title = f'{root_node} module tree'
+   else:
+      html_filename = 'call_graph_{:}.html'.format(root_node)
+      title = f'{root_node} call graph'
+
    html = open(html_filename,'w')
 
    #
@@ -284,7 +296,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    html.write('<html>\n')
    html.write('<head>\n\n')
 
-   html.write('<title>{:} call graph</title>\n\n'.format(root_node))
+   html.write(f'<title>{title}</title>\n\n')
 
    print_script.print_maphilight(html, node_list)
 
@@ -352,7 +364,7 @@ def create_html(callable_dict, svg_path, node_list, node_type_dict, path, root_n
    #
    # Nodes description
    #
-   print_node_info(html, callable_dict, node_list, action_dict)
+   print_node_info(html, callable_dict, node_list, action_dict, module_tree = module_tree)
 
    html.write('<!-- wrapper div -->\n')
    html.write('</div>\n\n')

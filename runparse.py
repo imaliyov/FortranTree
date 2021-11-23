@@ -34,21 +34,11 @@ except ImportError:
 #tnow = datetime.now
 #tnow = time.time
 tnow = time.perf_counter
-start_time = tnow()
 
-def str_examples():
-   return """
-Usage examples:
-   
-   runparse.py -p ../../pert-src        Parse the perturbo.x source code and build the subroutine tree
-   runparse.py -p ../../qe2pert-src     Parse the qe2pert.x source code and build the subroutine tree
-   
-   runparse.py -p ../../pert-src -m     Parse the perturbo.x source code and build the subroutine and module trees
+def create_callable_dict(path,source_file_list,module_tree=False):
    """
-
-def create_callable_dict(path,source_file_list):
-   """
-   Create a dictionary of the calls (functions, subroutines, and interfaces) 
+   Create a dictionary of the calls (functions, subroutines, and interfaces) if module_tree is False
+   or (modules) if module_tree is True
    from all the files from source_file_list
    """
    #
@@ -61,8 +51,14 @@ def create_callable_dict(path,source_file_list):
    # Get the dictionary of MyNode instances 
    # for Fortran "callables": subroutines, functions, and interfaces
    #
-   types_tuple = (Fortran2003.Subroutine_Stmt,Fortran2003.Function_Stmt,Fortran2003.Interface_Stmt, Fortran2003.Program_Stmt)
-   callable_dict = get_global_node_dict(parse_tree_dict,types_tuple,debug=False)
+
+   types_tuple_callable = (Fortran2003.Subroutine_Stmt,Fortran2003.Function_Stmt,Fortran2003.Interface_Stmt, Fortran2003.Program_Stmt)
+
+   callable_dict = get_global_node_dict(parse_tree_dict,types_tuple_callable,debug=False)
+
+   if module_tree:
+      types_tuple_module = (Fortran2003.Module_Stmt, Fortran2003.Program_Stmt)
+      module_dict = get_global_node_dict(parse_tree_dict,types_tuple_module,debug=False)
 
    function_list = [ x.name for x in callable_dict.values() if x.fparser_type == Fortran2003.Function_Stmt]
 
@@ -86,9 +82,12 @@ def create_callable_dict(path,source_file_list):
       if isinstance(obj,MyInterface):
          obj.update_interface_attrs(callable_dict)
 
-   return callable_dict
+   if module_tree:
+      return module_dict
+   else:
+      return callable_dict
 
-def create_callable_graph_dict(callable_dict):
+def create_callable_graph_dict(callable_dict,module_tree = False):
    """
    Using the callable_dict, create a dict that can be processed by pygraphviz
    """
@@ -97,13 +96,19 @@ def create_callable_graph_dict(callable_dict):
 
    graph_dict = {}
 
+   if module_tree:
+      connection_keyword = 'uses'
+   else:
+      connection_keyword = 'calls'
+
    for name, obj in callable_dict.items():
 
       tmp_call_dict = {}
-      for call in obj.calls: 
-         tmp_call_dict[call] = None
 
-      graph_dict[name] = tmp_call_dict
+      for child in obj.__dict__[connection_keyword]: 
+         tmp_call_dict[child] = None
+
+      graph_dict[name.lower()] = tmp_call_dict
 
    print('Done: {:.2f} s'.format(tnow() - t1))
 
@@ -172,7 +177,7 @@ def create_graph_for_node(root_node,graph_dict,callable_dict,args,hide_nodes,img
    t1 = tnow()
    print('\nCreating HTML file')
 
-   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, root_node)
+   htmltools.create_html(callable_dict, svg_path, prefix_node_list, node_type_dict, args.path, root_node, module_tree = args.module_tree)
 
    print('Done: {:.2f} s'.format(tnow() - t1))
 
@@ -181,7 +186,7 @@ def parse_arguments():
    Parse command line arguments
    """ 
 
-   help_description = textwrap.dedent(str_examples())
+   help_description = 'Parse the Fortran source code folder and build a subroutine or module tree with interactive nodes.'
 
    cmd_parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description=help_description)
 
@@ -210,11 +215,14 @@ def parse_arguments():
 
    return args
 
-def call_dict_from_path(path,exclude_files=[]):
+def call_dict_from_path(path,exclude_files=None, module_tree = False):
    """
    Parse the source folder and return the dictionary of callables
    """
    source_folder = os.path.abspath(path)
+
+   if exclude_files is None:
+      exclude_files = []
 
    source_file_list = []
    for filename in os.listdir(path):
@@ -223,7 +231,7 @@ def call_dict_from_path(path,exclude_files=[]):
 
    source_file_list = sorted(source_file_list)
 
-   callable_dict = create_callable_dict(path,source_file_list)
+   callable_dict = create_callable_dict(path,source_file_list,module_tree = module_tree)
 
    return callable_dict
 
@@ -248,7 +256,7 @@ def main():
    # Create the source code tree fparser
    #
    if args.path is not None:
-      callable_dict = call_dict_from_path(args.path, exclude_files = args.exclude_files)
+      callable_dict = call_dict_from_path(args.path, exclude_files = args.exclude_files, module_tree = args.module_tree)
 
       if args.save:
          save_call_dict(callable_dict,filename='restart_call_dict')
@@ -270,7 +278,7 @@ def main():
    # tostr() takes into account the comments that are before!
    #print(obj._node.parent.tostr())
 
-   graph_dict = create_callable_graph_dict(callable_dict)
+   graph_dict = create_callable_graph_dict(callable_dict, module_tree = args.module_tree)
 
    #
    # Nodes to hide

@@ -73,7 +73,7 @@ def get_global_node_dict(parse_tree_dict,fparser_types,debug=False):
       local_node_dict = {}
       for node in node_list:
          mynode = MyClassFactory(node,filename)
-         local_node_dict[mynode.name] = mynode
+         local_node_dict[mynode.name.lower()] = mynode
 
          if debug:
             print(mynode.name)
@@ -200,10 +200,12 @@ class MyNode:
          return 'Function'
       elif fparser_type == Fortran2003.Interface_Stmt:
          return 'Interface'
+      elif fparser_type == Fortran2003.Module_Stmt:
+         return 'Module'
       elif fparser_type == Fortran2003.Program_Stmt:
          return 'Program'
       else:
-         raise ValueError('interprete_fparser_type: fparser_type {:} is unknown'.format(fparser_type)+str(fparser_type))
+         raise ValueError(f'interprete_fparser_type: fparser_type {fparser_type} ({str(fparser_type)}) is unknown')
 
    @classmethod
    def get_all_subclasses(self):

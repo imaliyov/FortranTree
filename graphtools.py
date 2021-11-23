@@ -4,7 +4,7 @@
 Tools for graphviz parametrization
 """
 
-import time,sys
+import time,sys, warnings
 import pygraphviz as pgv
 from collections import OrderedDict
 
@@ -95,17 +95,7 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=No
    # or if a node is in hide_nodes list
    #
    if hide_from_files is not None or hide_nodes is not None:
-
-      for node in call_graph.nodes():
-
-         node_in_list = node in hide_nodes
-
-         node_from_hid_file = \
-            node in callable_dict.keys() and \
-            callable_dict[node].filename in hide_from_files
-
-         if node_in_list or node_from_hid_file:
-            call_graph.delete_node(node)
+      remove_nodes_from_file_or_list(call_graph,callable_dict,hide_from_files,hide_nodes)
 
    #
    # Allowed connections for specific nodes
@@ -123,11 +113,44 @@ def create_call_graph(graph_dict,callable_dict,root_node_name,hide_from_files=No
 
    for node in call_graph.nodes():
       if node not in all_successors and node != root_node:
-         call_graph.delete_node(node)
+         safely_delete_node(call_graph,node)
 
    print('Done: {:.2f} s'.format(tnow() - t1))
 
    return call_graph
+
+def remove_nodes_from_file_or_list(graph,callable_dict,hide_from_files,hide_nodes):
+   """
+   Remove the nodes from the graph. The nodes that belong to specific files or
+   that are listed will be removed.
+   """
+
+   for node in graph.nodes():
+
+      # Nodes specified explicitly by name
+      node_in_list = node in hide_nodes
+
+      # Nodes that belong to a file from the file list
+      node_from_hid_file = \
+         node in callable_dict.keys() and \
+         callable_dict[node].filename in hide_from_files
+
+      if node_in_list or node_from_hid_file:
+         safely_delete_node(graph,node)
+
+def safely_delete_node(graph,node):
+   """
+   Safely delete a node from a graph
+   """
+   try:
+      if graph.has_node(node):
+         graph.delete_node(node)
+      else:
+         warn_message = f'Attempt to delete a node {node}, which is not in the graph.'
+         warnings.warn(warn_message)
+
+   except Exception:
+      raise RuntimeError(f'node error: node {node} !')
 
 def modify_node_connections(graph,path_to_dict,action='keep'):
    """
@@ -137,20 +160,29 @@ def modify_node_connections(graph,path_to_dict,action='keep'):
       action_dict = load(stream,Loader=yaml.FullLoader)
 
    for node_name, connections in  action_dict.items():
-      node = graph.get_node(node_name)
 
-      for successor in graph.itersucc(node):
+      # TODO try expect blocks
+      # Segmentation fault sometimes occures
 
-         if action == 'keep':
-            if successor not in connections:
-               graph.delete_node(successor)
+      if graph.has_node(node_name):
+         node = graph.get_node(node_name)
 
-         elif action == 'exclude':
-            if successor in connections:
-               graph.delete_node(successor)
+         for successor in graph.itersucc(node):
 
-         else:
-            sys.exit(f'Wrong action: {action}')
+            if action == 'keep':
+               if successor not in connections:
+                  safely_delete_node(graph,successor)
+
+            elif action == 'exclude':
+               if successor in connections:
+                  safely_delete_node(graph,successor)
+
+            else:
+               sys.exit(f'Wrong action: {action}')
+
+      else:
+         warn_message = f'Attempt to access a node {node}, which is not in the graph.'
+         warnings.warn(warn_message)
 
 def apply_node_size_depth(graph,size_init,size_delta,root_node):
    """
